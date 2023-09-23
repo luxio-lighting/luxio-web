@@ -1,0 +1,309 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <title>Luxio Flash Tool</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Nunito:wght@200;300;400;500;600;700;800&display=swap');
+
+    :root {
+      --black: #000;
+      --white: #fff;
+      --luxio-blue: #00D2FF;
+      --luxio-green: #4FFF7F;
+      --luxio-mint: #2EECB6;
+      --luxio-gradient: linear-gradient(45deg, var(--luxio-blue), var(--luxio-green));
+    }
+
+    * {
+      margin: 0;
+      padding: 0;
+    }
+
+    html,
+    body {
+      height: 100%;
+    }
+
+    body {
+      background-color: var(--black);
+      font-family: Nunito, sans-serif;
+    }
+
+    #wrap {
+      max-width: 600px;
+      height: 100%;
+      margin: 0 auto;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+    }
+
+    #title {
+      display: inline-block;
+      background: var(--luxio-gradient);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+
+      margin-bottom: 5px;
+    }
+
+    #subtitle {
+      color: var(--white);
+      opacity: 0.5;
+      margin-bottom: 40px;
+    }
+
+    #start {
+      position: relative;
+      width: 200px;
+      height: 44px;
+      background: var(--luxio-gradient);
+      border-radius: 20px;
+      font-size: 16px;
+      font-weight: 500;
+      border: none;
+      margin-bottom: 20px;
+
+      overflow: hidden;
+
+      transition: height 1s 0s, width 1s 1s, opacity 1s;
+    }
+
+    #start.is-disabled {
+      filter: grayscale(100%);
+      opacity: 0.25;
+      pointer-events: none;
+    }
+
+    #start.is-disabled>span {
+      background-color: #222;
+    }
+
+    #start:not(.is-flashing) {
+      cursor: pointer;
+      transform: scale(1.0);
+      transition: transform 0.2s;
+    }
+
+    #start:not(.is-flashing):hover {
+      transform: scale(1.05);
+    }
+
+    #start:not(.is-flashing):active {
+      transform: scale(1.0);
+    }
+
+    #start>span {
+      display: block;
+      box-sizing: border-box;
+      margin: 1px;
+      width: calc(100% - 2px);
+      height: 42px;
+      background: black;
+      border-radius: 20px;
+      text-align: center;
+
+      transition: all 1s;
+    }
+
+    #start:not(.is-flashing)>span {
+      transition: all 0.2s;
+    }
+
+    #start:not(.is-flashing):hover>span {
+      background-color: rgba(0, 0, 0, 0);
+    }
+
+    #start>span>span {
+      background-image: var(--luxio-gradient);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+
+      line-height: 42px;
+      transition: all 0.2s;
+    }
+
+    #start:not(.is-flashing):hover>span>span {
+      background-image: linear-gradient(45deg, var(--black), var(--black));
+    }
+
+    #start.is-flashing {
+      width: 100%;
+      height: 6px;
+      background: #333;
+    }
+
+    #start.is-flashing>span {
+      height: 4px;
+      border-radius: 2px;
+      opacity: 0;
+      /* width: 0%;
+      background: var(--luxio-gradient) */
+    }
+
+    #start.is-flashing>span>span {
+      opacity: 0;
+      visibility: hidden;
+    }
+
+    #progress-bar {
+      position: absolute;
+      left: 0;
+      top: 0;
+      bottom: 0;
+      background: var(--luxio-gradient);
+      border-radius: 2px;
+      width: 0%;
+
+      transition: width 2s linear;
+    }
+  </style>
+
+  <script src="https://unpkg.com/crypto-js/crypto-js.js"></script>
+  <script type="module">
+    import {
+      ESPLoader,
+      Transport,
+    } from 'https://unpkg.com/esptool-js/bundle.js';
+
+    const $title = document.getElementById('title');
+    const $subtitle = document.getElementById('subtitle');
+    const $start = document.getElementById('start');
+    const $progress = document.getElementById('progress-bar');
+
+    if (!navigator.serial) {
+      $subtitle.textContent = 'Please use Google Chrome, Microsoft Edge or Opera.';
+      $start.classList.add('is-disabled');
+    }
+
+    $start.addEventListener('click', async () => {
+      if ($start.classList.contains('is-flashing')) return;
+      if ($start.classList.contains('is-disabled')) return;
+
+      try {
+        // Get Device
+        const device = await navigator.serial.requestPort({});
+
+        // Animate button
+        $start.classList.add('is-flashing');
+
+        // Create Transport
+        const transport = new Transport(device);
+
+        // Create ESPLoader
+        const esploader = new ESPLoader({
+          transport,
+          baudrate: 115200,
+          terminal: {
+            clean() {
+              console.log('[Terminal:clean]');
+            },
+            writeLine(line) {
+              console.log('[Terminal:line]', line);
+            },
+            write(data) {
+              console.log('[Terminal:write]', data);
+            },
+          },
+        });
+
+        // Get Chip
+        const chip = await esploader.main_fn();
+        console.log(`Chip: ${chip}`);
+        if (!chip.startsWith('ESP8266')) {
+          throw new Error(`Unknown Chip: ${chip}`);
+        }
+
+        $title.textContent = 'Flashing...';
+        $subtitle.textContent = 'This might take a few minutes.';
+        $progress.style.width = '2%';
+
+        // Download Firmware
+        const firmware = await Promise.resolve().then(async () => {
+          const url = new URL('https://ota.luxio.lighting');
+          url.searchParams.append('platform', 'WEMOS');
+          url.searchParams.append('id', '00:00:00:00:00:00');
+          url.searchParams.append('version', '0.0');
+
+          const res = await fetch(url);
+          if (!res.ok) {
+            const body = await res.json();
+            if (body.error) {
+              throw new Error(body.error);
+            }
+
+            throw new Error('Failed to download firmware');
+          }
+
+          // Download Blob
+          const blob = await res.blob();
+
+          const reader = new FileReader();;
+          reader.readAsBinaryString(blob);
+
+          return new Promise((resolve, reject) => {
+            reader.onload = () => {
+              resolve(reader.result);
+            };
+            reader.onerror = err => {
+              reject(err);
+            };
+          });
+        });
+
+        $progress.style.width = '3%';
+
+        await esploader.write_flash({
+          fileArray: [{
+            data: firmware,
+            address: 0x0,
+          }],
+          flashSize: 'keep',
+          eraseAll: true,
+          compress: true,
+          reportProgress(fileIndex, written, total) {
+            $progress.style.width = written / total * 100 + '%';
+          },
+          calculateMD5Hash(image) {
+            CryptoJS.MD5(CryptoJS.enc.Latin1.parse(image));
+          },
+        });
+
+        await esploader.hard_reset();
+
+        $title.textContent = 'All done.';
+        $subtitle.textContent = 'You can now safely disconnect the device.';
+        $start.style.opacity = 0;
+      } catch (err) {
+        if (err?.message?.includes('No port selected by the user.')) return;
+
+        console.error(err, err.message);
+
+        $title.textContent = 'Something went wrong.';
+        $subtitle.textContent = err.message;
+      }
+    });
+  </script>
+
+</head>
+
+<body>
+  <div id="wrap">
+    <h1 id="title">Flash your Luxio</h1>
+    <p id="subtitle">&nbsp;</p>
+    <script type="text/javascript">
+      document.getElementById('subtitle').textContent = `Make sure your device is connected to this ${navigator.platform.toUpperCase().includes('MAC') ? 'Mac' : 'PC'}.`;
+    </script>
+
+    <div id="start">
+      <span>
+        <span>⚡️ Flash</span>
+      </span>
+      <div id="progress-bar"></div>
+    </div>
+  </div>
+</body>
+
+</html>

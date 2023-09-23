@@ -1,0 +1,2 @@
+export MONGO_URI="mongodb+srv://luxio-web:...@"
+export OTA_SECRET="abcdef";

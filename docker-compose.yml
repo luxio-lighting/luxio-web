@@ -1,0 +1,30 @@
+version: "3"
+name: luxio
+
+services:
+  luxio:
+    hostname: luxio
+    image: luxio
+    command: npm run serve
+    stdin_open: true
+    tty: true
+    ports:
+      - "4000:4000"
+    environment:
+      - MONGO_URI=mongodb://mongo:27017/luxio
+    volumes:
+      - ./lib/:/app/lib/:ro
+      - ./services/:/app/services/:ro
+      - ./routes/:/app/routes/:ro
+      - ./config.js:/app/config.js:ro
+      - ./server.js:/app/server.js:ro
+    
+  mongo:
+    hostname: mongo
+    image: mongo
+    command: mongod --quiet --logpath /dev/null 
+    user: mongodb
+    ports:
+      - 27018:27017/tcp
+    volumes:
+      - ./volumes/mongo/:/data/db/:rw

@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="83px" height="83px" viewBox="0 0 83 83" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+    <title>Logo</title>
+    <defs>
+        <filter x="-4.1%" y="-2.8%" width="108.1%" height="108.1%" filterUnits="objectBoundingBox" id="filter-1">
+            <feOffset dx="0" dy="1" in="SourceAlpha" result="shadowOffsetOuter1"></feOffset>
+            <feGaussianBlur stdDeviation="0.5" in="shadowOffsetOuter1" result="shadowBlurOuter1"></feGaussianBlur>
+            <feColorMatrix values="0 0 0 0 0   0 0 0 0 0   0 0 0 0 0  0 0 0 0.5 0" type="matrix" in="shadowBlurOuter1" result="shadowMatrixOuter1"></feColorMatrix>
+            <feMerge>
+                <feMergeNode in="shadowMatrixOuter1"></feMergeNode>
+                <feMergeNode in="SourceGraphic"></feMergeNode>
+            </feMerge>
+        </filter>
+        <linearGradient x1="100%" y1="-1.2256287e-16%" x2="1.79184674e-14%" y2="100%" id="linearGradient-2">
+            <stop stop-color="#4FFF7F" offset="0%"></stop>
+            <stop stop-color="#00D2FF" offset="100%"></stop>
+        </linearGradient>
+    </defs>
+    <g id="Website" stroke="none" stroke-width="1" fill="none" fill-rule="evenodd" fill-opacity="0">
+        <g transform="translate(-758, -84)" fill="#FFFFFF" fill-rule="nonzero" id="Group-7" stroke="url(#linearGradient-2)" stroke-width="1.125">
+            <g transform="translate(220, 86)">
+                <g id="Logo" filter="url(#filter-1)" transform="translate(541, 0)">
+                    <path d="M4.20551042,-0.561961803 C5.43449855,-0.580608305 6.66738642,-0.11585917 7.66119312,0.829613417 L38.4545945,31.6651331 L69.052686,1.11611014 C69.9926072,0.12584109 71.2189758,-0.366514203 72.4568912,-0.366514203 C73.6896401,-0.366514203 74.9379479,0.12262541 75.9251746,1.11120245 C76.8630308,2.05034145 77.3315599,3.27654146 77.3315599,4.50253772 C77.3315599,5.72853398 76.8630308,6.95473399 75.925763,7.89328289 L45.3210706,38.6307748 L76.2011534,69.3712019 C77.1362457,70.3075731 77.5805176,71.5022847 77.5619438,72.7112307 C77.5433329,73.9225929 77.0574886,75.151789 76.1197535,76.1429744 C75.1137333,77.0984816 73.8693788,77.5625 72.6523762,77.5625 C71.4221529,77.5625 70.2192821,77.0896912 69.3283847,76.148685 L38.5465839,45.4157077 L8.03439046,75.9696349 C7.09623334,76.9090752 5.87128091,77.3782625 4.64660086,77.3782625 C3.42214505,77.3782625 2.19741696,76.909247 1.25914656,75.9702071 C0.271036026,75.0273983 -0.243959762,73.7705964 -0.262928412,72.5169531 C-0.281791636,71.2702775 0.188289517,70.0260962 1.17170816,69.0899336 L31.5892748,38.5398398 L0.895708579,7.62242475 C-0.0462721561,6.72797306 -0.542646637,5.49193385 -0.561915162,4.25706157 C-0.581086673,3.0284066 -0.129169155,1.80498761 0.809094423,0.916729478 C1.78835706,-0.0588337493 2.99775329,-0.543637423 4.20551042,-0.561961803 Z" id="X"></path>
+                </g>
+            </g>
+        </g>
+    </g>
+</svg>

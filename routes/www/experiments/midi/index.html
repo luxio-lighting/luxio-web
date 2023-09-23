@@ -1,0 +1,59 @@
+<!doctype html>
+<html>
+	<head>
+		<title>Web Midi Ledctrl</title>
+
+		<style type="text/css">
+		body,
+		html {
+			width: 100%;
+			height: 100%;
+			padding: 0;
+			margin: 0;
+		}
+		body {
+			background: black;
+			color: white;
+		}
+		
+		#status {
+			width: 100%;
+			height: 100%;
+			
+			display: flex;
+			align-items: center;
+			justify-content: center;
+			
+			font-size: 10vh;
+			font-family: Helvetica;
+			text-align: center;
+		}
+		
+		#devices {
+			position: absolute;
+			left: 1em;
+			top: 1em;
+			width: 20em;
+		}
+		</style>
+		
+		<script type="text/javascript" src="js/underscore.js"></script>
+		<script type="text/javascript" src="js/eventemitter.js"></script>
+		<script type="text/javascript" src="js/heir.js"></script>
+		<script type="text/javascript" src="js/ledctrl.helpers.js"></script>
+		<script type="text/javascript" src="js/ledctrl.discovery.js"></script>
+		<script type="text/javascript" src="js/ledctrl.device.js"></script>
+		<script type="text/javascript" src="js/midi.js"></script>
+		
+	</head>
+	<body>
+
+		<select id="devices">
+			<option disabled selected>--- Select a device ---</option>
+		</select>
+		
+		<div id="status"></div>
+	
+	</body>
+
+</html>

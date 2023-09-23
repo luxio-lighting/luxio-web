@@ -1,0 +1,249 @@
+<!doctype html>
+<html>
+	<head>
+		<title>Luxio Labs - Morse</title>
+		<meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
+
+		<style type="text/css">
+		* {
+			margin: 0;
+			padding: 0;
+			outline: none;
+		}
+
+		html,
+		body {
+			height: 100%;
+		}
+
+		body {
+			display: flex;
+			align-items: center;
+			justify-content: center;
+			flex-direction: column;
+
+			background: #333;
+
+			transition: all 0.15s;
+		}
+		body.on {
+			background: #ccc;
+		}
+
+		form {
+			font-size: 0;
+		}
+
+		form input {
+			height: 5vh;
+			padding: 0 2.5vh;
+			border: none;
+			font-family: Helvetica, sans-serif;
+			font-size: 2vh;
+			background: #eee;
+			transition: all 0.1s;
+			text-transform: uppercase;
+		}
+		form input[type="text"] {
+			border-radius: 10vh 0 0 10vh;
+			margin-right: 1px;
+			width: 70vw;
+		}
+		form input[type="submit"] {
+			-webkit-appearance: none;
+			border-radius: 0 10vh 10vh 0;
+			cursor: pointer;
+			width: 15vw;
+		}
+		form input[type="submit"]:hover {
+			background: #fff;
+		}
+
+		#morse {
+			margin: 2vh;
+			color: white;
+			font-size: 2vh;
+			letter-spacing: 2px;
+			font-family: Consolas, monospace;
+		}
+			#morse .character {
+				transition: all 0.1s;
+			}
+			#morse .character.on {
+				color: #0078FF;
+			}
+
+		#devices {
+			position: absolute;
+			bottom: 2vh;
+			left: 2vh;
+			font-family: Helvetica, sans-serif;
+			font-size: 2.4vh;
+			color: #333;
+		}
+		</style>
+
+		<script type="text/javascript" src="https://cdn.jsdelivr.net/npm/luxio@latest/dist/luxio.min.js"></script>
+		<script type="text/javascript" src="js/morse.js"></script>
+		<script type="text/javascript">
+		var devices = {};
+		var device = null;
+		var running = false;
+		var T = 200;
+
+		window.addEventListener('load', function(){
+			var Discovery = Luxio.Discovery;
+			var discovery = new Discovery();
+			
+			var devicesEl = document.getElementById('devices');
+			devicesEl.addEventListener('change', function(e){
+				var device = devices[e.target.value];
+				setDevice(device);
+			});
+
+			discovery.getDevices().then(function(devices_){
+				devices_.forEach(function(device){
+					devices[device.id] = device;
+					
+					var option = document.createElement('option');
+						option.textContent = device.name;
+						option.value = device.id;
+					devicesEl.appendChild(option);
+				});
+				
+				if( devices_.length ) {
+					setDevice(devices_[0]);
+				}
+			}).catch(alert);
+		});
+		
+		function setDevice(device_) {
+			device = device_;
+			device.on = false;
+			device.gradient = [ 'FFFFFF' ];
+			device.sync();			
+		}
+
+		function parseText( text ) {
+			var result = '';
+			var morse = Morse.encode( text );
+				morse = morse.replace(/---/g, '-');
+			return morse.split('').filter(function(character){
+				if( character === '.' ) return true;
+				if( character === '-' ) return true;
+				if( character === ' ' ) return true;
+				return false;
+			});
+		}
+
+		function show( text ) {
+
+			var intervals = [];
+
+			parseText(text).forEach(function(character){
+				var duration;
+				var flash;
+				if( character === '.' ) duration = T * 1;
+				if( character === '.' ) flash = true;
+				if( character === '-' ) duration = T * 3;
+				if( character === '-' ) flash = true;
+				if( character === ' ' ) duration = T * 3;
+				if( character === ' ' ) flash = false;
+
+				if( typeof duration === 'number' )
+					intervals.push({
+						duration: duration,
+						flash: flash
+					});
+			})
+
+			function nextInterval( index ) {
+
+				if( !running ) return;
+
+				var interval = intervals[ index ];
+				if( interval ) {
+					var characterEl = document.getElementById('character-' + index);
+										
+					setTimeout(function(){
+						if( interval.flash ) {
+							if( device ) {
+								device.on = true;
+								device.sync();
+							}
+							document.body.classList.add('on');
+						}
+						characterEl.classList.add('on');
+					}, T)
+
+					setTimeout(function(){
+						if( interval.flash ) {
+							if( device ) {
+								device.on = false;
+								device.sync();
+							}
+							document.body.classList.remove('on');
+						}
+						characterEl.classList.remove('on');
+					}, T + interval.duration);
+
+					setTimeout(function(){
+						nextInterval(index+1);
+					}, T + interval.duration);
+
+				} else {
+					setTimeout(function(){
+						nextInterval( 0 );
+					}, T * 7);
+				}
+			}
+
+			nextInterval(0);
+		}
+
+		window.addEventListener('load', function(){
+			document.getElementById('form').addEventListener('submit', function(e){
+				e.preventDefault();
+
+				if( running === false ) {
+					running = true;
+
+					var text = document.getElementById('text').value;
+					show( text );
+
+					document.getElementById('submit').value = 'STOP';
+
+				} else {
+					running = false;
+					document.getElementById('submit').value = 'GO';
+				}
+
+				return false;
+			});
+
+			document.getElementById('text').addEventListener('keyup', onKeyUp);
+
+			function onKeyUp() {
+				document.getElementById('morse').innerHTML = parseText(this.value).map(function(character, i){
+					return '<span class="character" id="character-' + i + '">' + character + '</span>';
+				}).join('');
+			}
+
+			document.getElementById('submit').value = 'GO';
+			document.getElementById('text').value = 'SOS';
+			onKeyUp.call( document.getElementById('text') );
+		});
+		</script>
+	</head>
+	<body>
+
+		<select id="devices"></select>
+
+		<form id="form" action="/" method="post">
+			<input id="text" type="text" value="" autocomplete="off" />
+			<input id="submit" type="submit" value="GO" />
+		</form>
+		<div id="morse"></div>
+
+	</body>
+</html>

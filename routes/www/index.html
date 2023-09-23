@@ -1,0 +1,584 @@
+<!doctype html>
+<html>
+
+<head>
+  <meta
+    name="viewport"
+    content="width=device-width, initial-scale=1"
+  />
+  <title>Luxio — Open Source Wi-Fi Gradient LED Strips</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Nunito:wght@200;300;400;500;600;700;800&display=swap');
+
+    :root {
+      --black: #000;
+      --white: #fff;
+      --luxio-blue: #00D2FF;
+      --luxio-green: #4FFF7F;
+      --luxio-mint: #2EECB6;
+      --luxio-gradient: linear-gradient(45deg, var(--luxio-blue), var(--luxio-green));
+      --width: 100%;
+    }
+
+    @media (min-width: 1000px) {
+      :root {
+        --width: 960px;
+      }
+    }
+
+    ::-webkit-scrollbar {
+      width: 8px;
+      height: 8px;
+    }
+
+    ::-webkit-scrollbar-track {
+      background: transparent;
+    }
+
+    ::-webkit-scrollbar-thumb {
+      border-radius: 10px;
+    }
+
+    ::-webkit-scrollbar-thumb:hover {
+      background: rgba(255, 255, 255, 0.35);
+    }
+
+
+    ::-webkit-scrollbar-thumb,
+    ::-webkit-scrollbar-thumb:active {
+      background: rgba(255, 255, 255, 0.3);
+    }
+
+    * {
+      margin: 0;
+      padding: 0;
+    }
+
+    ::selection {
+      background-color: var(--luxio-green);
+    }
+
+    body {
+      background-color: var(--black);
+      color: var(--white);
+      font-family: Nunito, sans-serif;
+    }
+
+    body:before {
+      position: absolute;
+      left: 0;
+      right: 0;
+      top: -400px;
+      height: 800px;
+
+      display: block;
+      content: "";
+      background:
+        /* linear-gradient(to bottom, rgba(0, 0, 0, 0.5) 0%, rgba(0, 0, 0, 1) 100%),
+        linear-gradient(to left, rgba(0, 0, 0, 1) 0%, rgba(0, 0, 0, 0) 25%, rgba(0, 0, 0, 0) 75%, rgba(0, 0, 0, 1) 100%), */
+        radial-gradient(rgba(0, 0, 0, 0.6) 0%, rgba(0, 0, 0, 1) 70%),
+        linear-gradient(to right, var(--luxio-green) 0%, var(--luxio-blue) 100%);
+      background-size: 100% 100%;
+    }
+
+    #wrap {
+      box-sizing: border-box;
+      position: relative;
+      width: var(--width);
+      margin: auto;
+      padding: 0 40px;
+    }
+
+    #logo {
+      margin: 30px 0;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+    }
+
+    #logo-icon {
+      display: block;
+      width: 77px;
+      height: 77px;
+      margin-bottom: 10px;
+      background: url(./img/logo.svg) no-repeat;
+      background-size: contain;
+    }
+
+    #logo-text {
+      font-size: 42px;
+      font-weight: 600;
+      background: var(--luxio-gradient);
+      /* text-shadow: 0 10px 40px rgba(0, 0, 0, 0.75); */
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    #hero {
+      position: relative;
+      display: flex;
+      flex-direction: column;
+      margin-top: 50px;
+      margin-bottom: 50px;
+    }
+
+    @media (min-width: 1000px) {
+      #hero {
+        margin-top: 100px;
+        flex-direction: row;
+      }
+    }
+
+    #hero-screenshot {
+      width: 100%;
+      max-width: 500px;
+      aspect-ratio: 0.75;
+      background: url(./img/screenshot.png) no-repeat;
+      background-size: 100% auto;
+
+      display: flex;
+      justify-content: center;
+      align-items: flex-end;
+    }
+
+    @media (min-width: 1000px) {
+      #hero-screenshot {
+        width: 400px;
+        height: 600px;
+        background-size: 400px auto;
+        margin-top: -40px;
+        margin-right: -20px;
+        margin-bottom: 0;
+      }
+    }
+
+    #hero-screenshot-ios,
+    #hero-screenshot-android {
+      font-size: 0;
+      margin: 0 10px;
+    }
+
+    #hero-screenshot-ios>img,
+    #hero-screenshot-android>img {
+      height: 40px;
+    }
+
+    @media (min-width: 1000px) {
+
+      #hero-screenshot-ios>img,
+      #hero-screenshot-android>img {
+        height: 50px;
+      }
+    }
+
+    #hero-text {}
+
+    #hero-title {
+      font-size: 40px;
+      line-height: 66px;
+      font-weight: 800;
+      margin-bottom: 50px;
+    }
+
+    @media (min-width: 1000px) {
+      #hero-title {
+        text-align: left;
+        font-size: 66px;
+        line-height: 98px;
+        font-weight: 800;
+      }
+    }
+
+    #hero-title-gradient {
+      background: var(--luxio-gradient);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    #hero-intro {
+      max-width: 600px;
+    }
+
+    #hero-intro p {
+      font-size: 24px;
+      font-weight: 600;
+      line-height: 40px;
+      color: #aaa;
+      margin-bottom: 1em;
+    }
+
+    .chapter {
+      margin-bottom: 100px;
+    }
+
+    .chapter-title {
+      display: inline-block;
+      font-size: 40px;
+      font-weight: 700;
+      background: var(--luxio-gradient);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    @media (min-width: 1000px) {
+      .chapter-title {
+        font-size: 48px;
+      }
+    }
+
+    .chapter-subtitle {
+      font-size: 24px;
+      color: #666;
+      margin-bottom: 1em;
+    }
+
+    .chapter-text {
+      font-size: 20px;
+      font-weight: 500;
+      line-height: 30px;
+      color: #aaa;
+      margin-bottom: 1em;
+    }
+
+    .chapter-text a {
+      font-weight: 600;
+      color: var(--luxio-mint);
+      text-decoration: none;
+    }
+
+    .chapter-text a:hover {
+      text-decoration: underline;
+    }
+
+    .steps {
+      margin-top: 50px;
+    }
+
+    .step {
+      position: relative;
+    }
+
+    .step:not(:last-child):after {
+      content: "";
+      display: block;
+      margin: 23px;
+      height: 100px;
+      width: 1px;
+      background: var(--white);
+      opacity: 0.25;
+    }
+
+    .step-icon {
+      display: block;
+      height: 46px;
+      margin-bottom: 10px;
+    }
+
+    .step-title {
+      font-size: 28px;
+      font-weight: 700;
+      line-height: 40px;
+    }
+
+    .step-instruction {
+      font-size: 20px;
+      font-weight: 500;
+      line-height: 40px;
+      color: #aaa;
+      opacity: 1;
+      max-width: 500px;
+      margin-bottom: 1em;
+    }
+
+    .step-instruction a {
+      font-weight: 600;
+      color: var(--luxio-mint);
+      text-decoration: none;
+    }
+
+    .step-instruction a:hover {
+      text-decoration: underline;
+    }
+
+    .shopping-list {
+      max-width: 350px;
+      background: #191919;
+      border-radius: 20px;
+      padding: 20px;
+      margin-bottom: 50px;
+    }
+
+    @media (min-width: 1000px) {
+      .shopping-list {
+        width: 350px;
+        float: right;
+      }
+    }
+
+    .shopping-list-title {
+      font-size: 24px;
+      font-weight: 700;
+      color: var(--white);
+      margin-bottom: 10px;
+    }
+
+    .shopping-list-item {
+      display: flex;
+      margin-bottom: 10px;
+    }
+
+    .shopping-list-item-title {
+      flex-grow: 1;
+      font-size: 17px;
+      font-weight: 600;
+      color: var(--luxio-mint);
+      text-decoration: none;
+    }
+
+    .shopping-list-item-title:hover {
+      text-decoration: underline;
+    }
+
+    .shopping-list-item-price {
+      flex-shrink: 0;
+      font-size: 17px;
+      font-weight: 600;
+      color: #777777;
+    }
+
+    .shopping-list-total {
+      border-top: 1px solid #777777;
+      margin-top: 20px;
+      padding-top: 20px;
+    }
+
+    .shopping-list-total-title {
+      color: #AEAEAE;
+    }
+
+    .shopping-list-total-title:hover {
+      text-decoration: none;
+    }
+
+    .cli-example {
+      display: inline-block;
+      white-space: nowrap;
+      padding: 1px;
+      border-radius: 20px;
+      background: var(--luxio-gradient);
+    }
+
+    .cli-example>pre {
+      font-size: 16px;
+      font-family: 'Roboto Mono', monospace;
+      line-height: 30px;
+      color: white;
+      border-radius: 20px;
+      padding: 20px;
+      background: rgba(0, 0, 0, 0.9);
+      overflow-x: auto;
+    }
+
+    .cli-example-inner {
+      max-width: calc(100vw - 120px);
+      overflow-x: auto;
+    }
+
+    #footer {
+      padding: 50px 0;
+      background: linear-gradient(to bottom, #000000, #222222);
+      text-align: center;
+    }
+
+    #footer-text {
+      width: var(--width);
+      margin: auto;
+      font-weight: 500;
+      color: #666;
+    }
+
+    #footer-text:before {
+      content: "";
+      display: block;
+      width: 100%;
+      height: 1px;
+      background: linear-gradient(to right, rgba(0, 0, 0, 0), #333, rgba(0, 0, 0, 0.0));
+      margin-bottom: 50px;
+    }
+
+    #footer-text a {
+      color: var(--luxio-mint);
+      text-decoration: none;
+    }
+
+    #footer-text a:hover {
+      text-decoration: underline;
+    }
+  </style>
+</head>
+
+<body>
+  <div id="wrap">
+    <div id="logo">
+      <div id="logo-icon"></div>
+      <div id="logo-text">Luxio</div>
+    </div>
+
+    <div id="hero">
+      <div id="hero-text">
+        <h1 id="hero-title">Open Source<br />
+          Wi-Fi <span id="hero-title-gradient">Gradient</span><br />
+          LED Strips</h1>
+
+        <div id="hero-intro">
+          <p>Luxio are open source <span style="word-break: keep-all;">Wi-Fi</span> LED Strips, that can control every
+            pixel's color
+            to create beautiful gradients & animations.</p>
+          <!-- <p>There's firmware, an iOS & Android app, automatic updates and a command-line tool for powerusers.</p> -->
+        </div>
+      </div>
+
+      <div id="hero-screenshot">
+        <a
+          id="hero-screenshot-ios"
+          href="https://apps.apple.com/app/luxio/id6464080905"
+          target="_blank"
+        >
+          <img src="./img/ios.svg" />
+        </a>
+
+        <a
+          id="hero-screenshot-android"
+          href="https://play.google.com/store/apps/details?id=lighting.luxio.android"
+          target="_blank"
+        >
+          <img src="./img/android.svg" />
+        </a>
+      </div>
+    </div>
+
+    <div class="chapter">
+      <h2 class="chapter-title">Get Started</h2>
+      <p class="chapter-subtitle">Three simple steps to get started.</p>
+
+      <div class="steps">
+        <div class="step">
+          <div class="shopping-list">
+            <div class="shopping-list-title">Shopping List</div>
+            <div class="shopping-list-item">
+              <a
+                class="shopping-list-item-title"
+                href="https://www.aliexpress.com/item/1005005407298963.html"
+                target="_blank"
+              >Wemos D1 mini V4</a>
+              <span class="shopping-list-item-price">&euro; 2</span>
+            </div>
+            <div class="shopping-list-item">
+              <a
+                class="shopping-list-item-title"
+                href="https://www.aliexpress.com/item/1005005288299757.html"
+                target="_blank"
+              >WS2812b LED Strip (2m)</a>
+              <span class="shopping-list-item-price">&euro; 6</span>
+            </div>
+            <div class="shopping-list-item">
+              <a
+                class="shopping-list-item-title"
+                href="https://aliexpress.com/w/wholesale-USB%2525252dC-Cable.html"
+                target="_blank"
+              >USB-C Cable</a>
+              <span class="shopping-list-item-price">&euro; 1</span>
+            </div>
+            <div class="shopping-list-item">
+              <a
+                class="shopping-list-item-title"
+                href="https://aliexpress.com/w/wholesale-USB%2525252dC-Adapter-5V-3A.html"
+                target="_blank"
+              >USB-C Adapter</a>
+              <span class="shopping-list-item-price">&euro; 4</span>
+            </div>
+            <div class="shopping-list-item shopping-list-total">
+              <div class="shopping-list-item-title shopping-list-total-title">Total</div>
+              <span class="shopping-list-item-price">&euro; 13</span>
+            </div>
+          </div>
+          <img
+            class="step-icon"
+            src="./img/step-buy.svg"
+          />
+          <h3 class="step-title">Buy the hardware</h3>
+          <p class="step-instruction">Everything you need for a single Luxio LED Strip can be bought on AliExpress for
+            less than € 20 total. <a
+              href="https://wiki.luxio.lighting/getting-started/hardware"
+              target="_blank"
+            >Learn more »</a>
+          </p>
+        </div>
+        <div class="step">
+          <img
+            class="step-icon"
+            src="./img/step-solder.svg"
+          />
+          <h3 class="step-title">Solder three wires</h3>
+          <p class="step-instruction">Even if you don't have any soldering experience, it's quite easy, and makes for
+            a great first project! <a
+              href="https://wiki.luxio.lighting/getting-started/soldering"
+              target="_blank"
+            >Learn how »</a>
+          </p>
+        </div>
+        <div class="step">
+          <img
+            class="step-icon"
+            src="./img/step-flash.svg"
+          />
+          <h3 class="step-title">Flash the controller</h3>
+          <p class="step-instruction">Connect the USB-C of the Wemos D1 mini to your PC or Mac, and visit the <a
+              href="https://flash.luxio.lighting"
+              target="_blank"
+            >Luxio Flash Tool</a> in Google Chrome or Microsoft Edge to flash it once. <span style="opacity: 0.7">From
+              then on, software updates will be installed automatically.</span></p>
+        </div>
+      </div>
+    </div>
+
+    <div class="chapter">
+      <h2 class="chapter-title">Luxio CLI</h2>
+      <p class="chapter-subtitle">Control any Luxio using the Command-Line Interface.</p>
+
+      <div class="cli-example">
+        <pre><div class="cli-example-inner"><span style="opacity: 0.5">$ npm i -g @luxio-lighting/cli</span>
+$ luxio on --device "Luxio Bedroom"
+$ luxio gradient --colors "#FF0000, #00FF00, #0000FF"
+$ luxio effect --id rainbow</div></pre>
+      </div>
+    </div>
+
+    <div class="chapter">
+      <h2 class="chapter-title">Homey</h2>
+      <p class="chapter-subtitle">Connect Luxio with Homey Pro.</p>
+
+      <p class="chapter-text">Homey is the world's most advanced smart home platform, connecting your entire smart home
+        in a single
+        place. It's also the best way to control Luxio out-of-home, and through Google Assistant, Alexa & Siri.</p>
+      </p>
+      <p class="chapter-text">Get the Homey Pro app for Luxio in the <a
+          href="https://homey.app/nl-nl/app/lighting.luxio.homey/test/"
+          target="_blank"
+        >Homey App Store</a>.</p>
+    </div>
+
+  </div>
+
+  <div id="footer">
+    <p id="footer-text">
+      &copy; Luxio Lighting • Created by <a href="https://emilenijssen.nl">Emile Nijssen</a> • Source on <a
+        href="https://github.com/luxio-lighting"
+      >GitHub</a>
+    </p>
+  </div>
+
+</body>
+
+</html>

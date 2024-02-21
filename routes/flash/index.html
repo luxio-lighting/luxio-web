@@ -32,12 +32,11 @@
 
     #wrap {
       max-width: 600px;
-      height: 100%;
       margin: 0 auto;
+      padding-top: 35vh;
       display: flex;
       flex-direction: column;
       align-items: center;
-      justify-content: center;
     }
 
     #title {
@@ -55,7 +54,20 @@
       margin-bottom: 40px;
     }
 
-    #start {
+    .step {
+      align-self: stretch;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+
+      display: none;
+    }
+
+    .step.is-visible {
+      display: flex;
+    }
+
+    .button {
       position: relative;
       width: 200px;
       height: 44px;
@@ -71,31 +83,31 @@
       transition: height 1s 0s, width 1s 1s, opacity 1s;
     }
 
-    #start.is-disabled {
+    .button.is-disabled {
       filter: grayscale(100%);
       opacity: 0.25;
       pointer-events: none;
     }
 
-    #start.is-disabled>span {
+    #flash-button.is-disabled>span {
       background-color: #222;
     }
 
-    #start:not(.is-flashing) {
+    #flash-button:not(.is-flashing) {
       cursor: pointer;
       transform: scale(1.0);
       transition: transform 0.2s;
     }
 
-    #start:not(.is-flashing):hover {
+    #flash-button:not(.is-flashing):hover {
       transform: scale(1.05);
     }
 
-    #start:not(.is-flashing):active {
+    #flash-button:not(.is-flashing):active {
       transform: scale(1.0);
     }
 
-    #start>span {
+    #flash-button>span {
       display: block;
       box-sizing: border-box;
       margin: 1px;
@@ -108,15 +120,15 @@
       transition: all 1s;
     }
 
-    #start:not(.is-flashing)>span {
+    #flash-button:not(.is-flashing)>span {
       transition: all 0.2s;
     }
 
-    #start:not(.is-flashing):hover>span {
+    #flash-button:not(.is-flashing):hover>span {
       background-color: rgba(0, 0, 0, 0);
     }
 
-    #start>span>span {
+    #flash-button>span>span {
       background-image: var(--luxio-gradient);
       -webkit-background-clip: text;
       -webkit-text-fill-color: transparent;
@@ -125,17 +137,17 @@
       transition: all 0.2s;
     }
 
-    #start:not(.is-flashing):hover>span>span {
+    #flash-button:not(.is-flashing):hover>span>span {
       background-image: linear-gradient(45deg, var(--black), var(--black));
     }
 
-    #start.is-flashing {
+    #flash-button.is-flashing {
       width: 100%;
       height: 6px;
       background: #333;
     }
 
-    #start.is-flashing>span {
+    #flash-button.is-flashing>span {
       height: 4px;
       border-radius: 2px;
       opacity: 0;
@@ -143,12 +155,12 @@
       background: var(--luxio-gradient) */
     }
 
-    #start.is-flashing>span>span {
+    #flash-button.is-flashing>span>span {
       opacity: 0;
       visibility: hidden;
     }
 
-    #progress-bar {
+    #flash-progress {
       position: absolute;
       left: 0;
       top: 0;
@@ -159,132 +171,449 @@
 
       transition: width 2s linear;
     }
+
+    #wifi-networks {
+      border: 1px solid #333;
+      border-radius: 10px;
+      width: 300px;
+      margin-bottom: 30px;
+    }
+
+    #wifi-networks:empty {
+      display: none;
+    }
+
+    .wifi-network {
+      display: flex;
+      align-items: center;
+
+      color: white;
+      padding: 0 20px;
+      line-height: 50px;
+      border-bottom: 0px solid #333;
+
+      height: 0;
+      opacity: 0;
+      overflow: hidden;
+      text-indent: -10px;
+
+      transition: opacity 0.1s, height 0.1s, text-indent 0.1s 0.1s;
+    }
+
+    .wifi-network.is-visible {
+      height: 50px;
+      opacity: 1;
+      border-bottom-width: 1px;
+      text-indent: 0px;
+    }
+
+    .wifi-network:last-child {
+      border-bottom: none;
+    }
+
+    .wifi-network:hover {
+      background: #333;
+      cursor: pointer;
+    }
+
+    .wifi-network-name {
+      flex-grow: 1;
+      font-size: 16px;
+      font-weight: 500;
+    }
+
+    .wifi-network-icon {
+      width: 24px;
+      height: 24px;
+      background-size: contain;
+      background-repeat: no-repeat;
+      background-position: center center;
+    }
+
+    .wifi-network-icon[data-icon="good-secure"] {
+      background-image: url('./img/wifi-good-secure.svg');
+    }
+
+    .wifi-network-icon[data-icon="good-insecure"] {
+      background-image: url('./img/wifi-good-insecure.svg');
+    }
+
+    .wifi-network-icon[data-icon="poor-secure"] {
+      background-image: url('./img/wifi-poor-secure.svg');
+    }
+
+    .wifi-network-icon[data-icon="poor-insecure"] {
+      background-image: url('./img/wifi-poor-insecure.svg');
+    }
   </style>
 
-  <script src="https://unpkg.com/crypto-js/crypto-js.js"></script>
+  <script src="https://unpkg.com/crypto-js@4.2.0/crypto-js.js"></script>
   <script type="module">
     import {
       ESPLoader,
       Transport,
-    } from 'https://unpkg.com/esptool-js/bundle.js';
+    } from 'https://unpkg.com/esptool-js@0.4.1/bundle.js';
 
     const $title = document.getElementById('title');
     const $subtitle = document.getElementById('subtitle');
-    const $start = document.getElementById('start');
-    const $progress = document.getElementById('progress-bar');
+    const $stepFlash = document.getElementById('step-flash');
+    const $stepWiFi = document.getElementById('step-wifi');
+    const $flashButton = document.getElementById('flash-button');
+    const $flashProgress = document.getElementById('flash-progress');
+    const $wifiNetworks = document.getElementById('wifi-networks');
 
-    if (!navigator.serial) {
-      $subtitle.textContent = 'Please use Google Chrome, Microsoft Edge or Opera.';
-      $start.classList.add('is-disabled');
-    }
+    Promise.resolve().then(async () => {
+      if (!navigator.serial) {
+        $subtitle.textContent = 'Please use Google Chrome, Microsoft Edge or Opera.';
+        $stepFlash.classList.remove('is-visible');
+        return;
+      }
 
-    $start.addEventListener('click', async () => {
-      if ($start.classList.contains('is-flashing')) return;
-      if ($start.classList.contains('is-disabled')) return;
+      $flashButton.addEventListener('click', async () => {
+        if ($flashButton.classList.contains('is-flashing')) return;
+        if ($flashButton.classList.contains('is-disabled')) return;
 
-      try {
-        // Get Device
-        const device = await navigator.serial.requestPort({});
+        try {
+          // Get Device
+          const device = await navigator.serial.requestPort({});
 
-        // Animate button
-        $start.classList.add('is-flashing');
+          // Animate button
+          $flashButton.classList.add('is-flashing');
 
-        // Create Transport
-        const transport = new Transport(device);
+          device.addEventListener('disconnect', () => {
+            $title.textContent = 'Device disconnected.';
+            $subtitle.textContent = 'Please reconnect the device and try again.';
+            $flashButton.classList.remove('is-flashing');
+            $flashButton.classList.add('is-errored');
+          });
 
-        // Create ESPLoader
-        const esploader = new ESPLoader({
-          transport,
-          baudrate: 115200,
-          terminal: {
-            clean() {
-              console.log('[Terminal:clean]');
+          // Create Transport
+          const transport = new Transport(device);
+
+          // Create ESPLoader
+          const esploader = new ESPLoader({
+            transport,
+            baudrate: 115200,
+            terminal: {
+              clean() {
+                console.log('[Terminal:clean]');
+              },
+              writeLine(line) {
+                console.log('[Terminal:line]', line);
+              },
+              write(data) {
+                console.log('[Terminal:write]', data);
+              },
             },
-            writeLine(line) {
-              console.log('[Terminal:line]', line);
-            },
-            write(data) {
-              console.log('[Terminal:write]', data);
-            },
-          },
-        });
+          });
 
-        // Get Chip
-        const chip = await esploader.main_fn();
-        console.log(`Chip: ${chip}`);
-        if (!chip.startsWith('ESP8266')) {
-          throw new Error(`Unknown Chip: ${chip}`);
-        }
-
-        $title.textContent = 'Flashing...';
-        $subtitle.textContent = 'This might take a few minutes.';
-        $progress.style.width = '2%';
-
-        // Download Firmware
-        const firmware = await Promise.resolve().then(async () => {
-          const url = new URL('https://ota.luxio.lighting');
-          url.searchParams.append('platform', 'WEMOS');
-          url.searchParams.append('id', '00:00:00:00:00:00');
-          url.searchParams.append('version', '0.0');
-
-          const res = await fetch(url);
-          if (!res.ok) {
-            const body = await res.json();
-            if (body.error) {
-              throw new Error(body.error);
-            }
-
-            throw new Error('Failed to download firmware');
+          // Get Chip
+          const chip = await esploader.main();
+          console.log(`Chip: ${chip}`);
+          if (!chip.startsWith('ESP8266')) {
+            throw new Error(`Unknown Chip: ${chip}`);
           }
 
-          // Download Blob
-          const blob = await res.blob();
+          $title.textContent = 'Flashing...';
+          $subtitle.textContent = 'This might take a few minutes.';
+          $flashProgress.style.width = '2%';
 
-          const reader = new FileReader();;
-          reader.readAsBinaryString(blob);
+          // Download Firmware
+          const firmware = await Promise.resolve().then(async () => {
+            // const url = new URL('https://ota.luxio.lighting');
+            // url.searchParams.append('platform', 'WEMOS');
+            // url.searchParams.append('id', '00:00:00:00:00:00');
+            // url.searchParams.append('version', '0.0');
 
-          return new Promise((resolve, reject) => {
-            reader.onload = () => {
-              resolve(reader.result);
-            };
-            reader.onerror = err => {
-              reject(err);
-            };
+            const url = './build/firmware.bin';
+
+            const res = await fetch(url);
+            if (!res.ok) {
+              const body = await res.json();
+              if (body.error) {
+                throw new Error(body.error);
+              }
+
+              throw new Error('Failed to download firmware');
+            }
+
+            // Download Blob
+            const blob = await res.blob();
+
+            const reader = new FileReader();;
+            reader.readAsBinaryString(blob);
+
+            return new Promise((resolve, reject) => {
+              reader.onload = () => {
+                resolve(reader.result);
+              };
+              reader.onerror = err => {
+                reject(err);
+              };
+            });
           });
-        });
 
-        $progress.style.width = '3%';
+          $flashProgress.style.width = '3%';
 
-        await esploader.write_flash({
-          fileArray: [{
-            data: firmware,
-            address: 0x0,
-          }],
-          flashSize: 'keep',
-          eraseAll: true,
-          compress: true,
-          reportProgress(fileIndex, written, total) {
-            $progress.style.width = written / total * 100 + '%';
-          },
-          calculateMD5Hash(image) {
-            CryptoJS.MD5(CryptoJS.enc.Latin1.parse(image));
-          },
-        });
+          // await new Promise(resolve => setTimeout(resolve, 1000));
 
-        await esploader.hard_reset();
+          // await esploader.writeFlash({
+          //   fileArray: [{
+          //     data: firmware,
+          //     address: 0x0,
+          //   }],
+          //   flashSize: 'keep',
+          //   eraseAll: true,
+          //   compress: true,
+          //   reportProgress(fileIndex, written, total) {
+          //     $flashProgress.style.width = written / total * 100 + '%';
+          //   },
+          //   calculateMD5Hash(image) {
+          //     CryptoJS.MD5(CryptoJS.enc.Latin1.parse(image));
+          //   },
+          // });
 
-        $title.textContent = 'All done.';
-        $subtitle.textContent = 'You can now safely disconnect the device.';
-        $start.style.opacity = 0;
-      } catch (err) {
-        if (err?.message?.includes('No port selected by the user.')) return;
+          await esploader.hardReset();
+          await device.close();
+          $flashButton.style.opacity = 0;
+          $stepFlash.classList.remove('is-visible');
 
-        console.error(err, err.message);
+          $stepWiFi.classList.add('is-visible');
+          $title.textContent = 'Scanning...';
+          $subtitle.textContent = 'Luxio is scanning for Wi-Fi networks...';
 
-        $title.textContent = 'Something went wrong.';
-        $subtitle.textContent = err.message;
-      }
+          // Set Baudrate
+          const luxioSerial = new LuxioSerial({ device });
+          await luxioSerial.open();
+
+          await new Promise(resolve => setTimeout(resolve, 1000)); // TODO: Remove this?
+          // await luxioSerial.write({ method: 'led.set_color', params: { r: 0, g: 255, b: 255, w: 0 } });
+          await luxioSerial.wifi.scanNetworks();
+          await new Promise(resolve => setTimeout(resolve, 4000));
+          const networks = await luxioSerial.wifi.getNetworks();
+
+          // Ask user to select network & enter password
+          $title.textContent = 'Wi-Fi Networks';
+          $subtitle.textContent = `Choose the Wi-Fi network you want to connect to.`;
+
+          const {
+            ssid,
+            pass,
+          } = await new Promise((resolve, reject) => {
+            const networksObj = networks.reduce((result, network) => {
+              // Skip if we already have a network with a stronger signal
+              if (result[network.ssid] && result[network.ssid].rssi > network.rssi) return result;
+
+              result[network.ssid] = network;
+              return result;
+            }, {});
+
+            const networksArr = Object.values(networksObj).sort((a, b) => b.rssi - a.rssi);
+
+            for (const [i, network] of Object.entries(networksArr)) {
+              const $wifiNetwork = document.createElement('div');
+              $wifiNetwork.classList.add('wifi-network');
+              $wifiNetwork.addEventListener('click', async () => {
+                const pass = prompt(`Enter password for ${network.ssid}`);
+                resolve({ ssid: network.ssid, pass });
+              });
+              $wifiNetworks.appendChild($wifiNetwork);
+
+              const $wifiNetworkName = document.createElement('div');
+              $wifiNetworkName.classList.add('wifi-network-name');
+              $wifiNetworkName.textContent = network.ssid;
+              $wifiNetwork.appendChild($wifiNetworkName);
+
+              const $wifiNetworkIcon = document.createElement('div');
+              $wifiNetworkIcon.classList.add('wifi-network-icon');
+              $wifiNetworkIcon.dataset.icon = network.encryption === 'none'
+                ? network.rssi > -55
+                  ? 'good-insecure'
+                  : 'poor-insecure'
+                : network.rssi > -55
+                  ? 'good-secure'
+                  : 'poor-secure';
+              $wifiNetwork.appendChild($wifiNetworkIcon);
+
+              setTimeout(() => {
+                $wifiNetwork.classList.add('is-visible');
+              }, i * 50);
+            }
+          });
+
+          $wifiNetworks.innerHTML = '';
+
+          // Connect to network
+          $title.textContent = 'Connecting...';
+          $subtitle.textContent = `Luxio is connecting to ${ssid}...`;
+
+          const result = await luxioSerial.wifi.connectToNetwork({ ssid, pass });
+
+          // Poll wifi.getState until connected
+          while (true) {
+            const state = await luxioSerial.wifi.getState();
+            if (state.connected) break;
+            await new Promise(resolve => setTimeout(resolve, 500));
+          }
+
+          // Set to Green
+          for (let i = 0; i < 2; i++) {
+            await luxioSerial.led.setColor({ r: 0, g: 255, b: 0, w: 0 });
+            await new Promise(resolve => setTimeout(resolve, 300));
+            await luxioSerial.led.setColor({ r: 0, g: 0, b: 0, w: 255 }); // TODO: RGB
+            await new Promise(resolve => setTimeout(resolve, 300));
+          }
+
+          $title.textContent = 'All done.';
+          $subtitle.textContent = 'You can now safely disconnect the device.';
+
+        } catch (err) {
+          if (err?.message?.includes('No port selected by the user.')) return;
+
+          console.error(err, err.message);
+
+          $title.textContent = 'Something went wrong.';
+          $subtitle.textContent = err.message;
+        }
+      });
+
+    }).catch(err => {
+      console.error(err);
+      $title.textContent = 'Something went wrong.';
+      $subtitle.textContent = err.message;
     });
+
+    class LuxioSerial {
+
+      constructor({ device }) {
+        this.device = device;
+        this.reader = null;
+        this.writer = null;
+
+        this.buffer = '';
+
+        this.encoder = new TextEncoder();
+        this.decoder = new TextDecoder();
+
+        this.requestId = 1;
+        this.requests = new Map();
+      }
+
+      debug(...props) {
+        console.log('[LuxioSerial]', ...props);
+      }
+
+      async open() {
+        await this.device.open({ baudRate: 115200 });
+        this.reader = this.device.readable.getReader();
+        this.writer = this.device.writable.getWriter();
+
+        Promise.resolve().then(async () => {
+          while (true) {
+            const { value, done } = await this.reader.read();
+            if (done) break;
+
+            for (const char of this.decoder.decode(value)) {
+              if (char === '\n') {
+                // console.log(this.buffer)
+                try {
+                  const json = JSON.parse(this.buffer);
+                  if (json.debug) {
+                    this.debug('[debug]', json.debug);
+                  } else if (json.id) {
+                    const request = this.requests.get(json.id);
+                    if (!request) return this.debug(`No request found for id: ${json.id}`);
+
+                    if (json.error) {
+                      request.reject(json.error);
+                    } else {
+                      request.resolve(json.result);
+                    }
+
+                    this.requests.delete(json.id);
+                  }
+                } catch (err) {
+                  this.debug(`Could Not Parse JSON: ${err.message}`);
+                }
+                this.buffer = '';
+              } else {
+                this.buffer += char;
+              }
+            }
+          }
+        }).catch(err => this.debug(err));
+      }
+
+      async close() {
+        await this.device.close();
+      }
+
+      async write(data) {
+        if (!this.writer || !this.reader) {
+          throw new Error('Device not open');
+        }
+
+        await this.writer.write(this.encoder.encode(JSON.stringify(data) + '\n'));
+      }
+
+      async request(method, params = {}) {
+        const requestId = ++this.requestId % 256;
+
+        const data = {
+          method,
+          params,
+          id: requestId,
+        };
+
+        let requestPromiseResolve;
+        let requestPromiseReject;
+        const requestPromise = new Promise((resolve, reject) => {
+          requestPromiseResolve = resolve;
+          requestPromiseReject = reject;
+        });
+
+        this.requests.set(requestId, {
+          resolve: requestPromiseResolve,
+          reject: requestPromiseReject,
+        });
+
+        await this.write(data).catch(err => {
+          this.requests.delete(requestId);
+          throw err;
+        });
+
+        return requestPromise;
+      }
+
+      // Methods
+      wifi = {
+        getState: async () => {
+          return this.request('wifi.get_state');
+        },
+
+        scanNetworks: async () => {
+          return this.request('wifi.scan_networks');
+        },
+
+        getNetworks: async () => {
+          return this.request('wifi.get_networks');
+        },
+
+        connectToNetwork: async ({ ssid, pass }) => {
+          return this.request('wifi.connect_to_network', { ssid, pass });
+        },
+      };
+
+      led = {
+        setColor: async ({ r, g, b, w }) => {
+          return this.request('led.set_color', { r, g, b, w });
+        },
+
+        setGradient: async ({ pixels = [] }) => {
+          return this.request('led.set_gradient', { pixels });
+        },
+      }
+    }
   </script>
 
 </head>
@@ -297,11 +626,27 @@
       document.getElementById('subtitle').textContent = `Make sure your device is connected to this ${navigator.platform.toUpperCase().includes('MAC') ? 'Mac' : 'PC'}.`;
     </script>
 
-    <div id="start">
-      <span>
-        <span>⚡️ Flash</span>
-      </span>
-      <div id="progress-bar"></div>
+    <div
+      id="step-flash"
+      class="step is-visible"
+    >
+      <div
+        id="flash-button"
+        class="button"
+      >
+        <span>
+          <span>⚡️ Flash</span>
+        </span>
+        <div id="flash-progress"></div>
+      </div>
+    </div>
+
+    <div
+      id="step-wifi"
+      class="step"
+    >
+      <div id="wifi-networks"></div>
+
     </div>
   </div>
 </body>

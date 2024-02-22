@@ -165,7 +165,9 @@ export default class LuxioWeb {
               $wifiNetwork.classList.add('is-selected');
 
               setTimeout(() => {
-                $wifiNetworkPasswordInput.focus();
+                if ($wifiNetworkPasswordInput) {
+                  $wifiNetworkPasswordInput.focus();
+                }
               }, 100);
             });
             this.$wifiNetworks.appendChild($wifiNetwork);
@@ -203,27 +205,34 @@ export default class LuxioWeb {
             $wifiNetworkPasswordInner.classList.add('wifi-network-password-inner');
             $wifiNetworkPasswordOuter.appendChild($wifiNetworkPasswordInner);
 
-            const $wifiNetworkPasswordInputWrap = document.createElement('div');
-            $wifiNetworkPasswordInputWrap.classList.add('wifi-network-password-input-wrap');
-            $wifiNetworkPasswordInner.appendChild($wifiNetworkPasswordInputWrap);
+            let $wifiNetworkPasswordInputWrap;
+            let $wifiNetworkPasswordInput;
+            if (network.encryption !== 'none') {
+              $wifiNetworkPasswordInputWrap = document.createElement('div');
+              $wifiNetworkPasswordInputWrap.classList.add('wifi-network-password-input-wrap');
+              $wifiNetworkPasswordInner.appendChild($wifiNetworkPasswordInputWrap);
 
-            const $wifiNetworkPasswordInput = document.createElement('input');
-            $wifiNetworkPasswordInput.classList.add('wifi-network-password-input');
-            $wifiNetworkPasswordInput.type = 'text';
-            $wifiNetworkPasswordInput.placeholder = 'Password';
-            $wifiNetworkPasswordInput.addEventListener('keydown', e => {
-              if (e.key === 'Enter') {
-                $wikiNetworkConnect.click();
-              }
-            });
-            $wifiNetworkPasswordInputWrap.appendChild($wifiNetworkPasswordInput);
+              $wifiNetworkPasswordInput = document.createElement('input');
+              $wifiNetworkPasswordInput.classList.add('wifi-network-password-input');
+              $wifiNetworkPasswordInput.type = 'text';
+              $wifiNetworkPasswordInput.placeholder = 'Password';
+              $wifiNetworkPasswordInput.addEventListener('keydown', e => {
+                if (e.key === 'Enter') {
+                  $wikiNetworkConnect.click();
+                }
+              });
+              $wifiNetworkPasswordInputWrap.appendChild($wifiNetworkPasswordInput);
+            }
 
             const $wikiNetworkConnect = document.createElement('div');
             $wikiNetworkConnect.classList.add('wifi-network-connect');
             $wikiNetworkConnect.textContent = 'Connect';
             $wikiNetworkConnect.addEventListener('click', async () => {
-              const pass = $wifiNetworkPasswordInput.value;
-              if (!pass) return;
+              let pass = '';
+              if ($wifiNetworkPasswordInput) {
+                pass = $wifiNetworkPasswordInput.value;
+                if (!pass) return;
+              }
 
               resolve({ ssid: network.ssid, pass });
             });
@@ -261,12 +270,19 @@ export default class LuxioWeb {
           .then(() => {
             wifiConnected = true;
           })
-          .catch(err => {
-            // TODO: Retry
+          .catch(async err => {
+            console.error(err);
 
-            // throw new Error(`${deviceName} couldn't connect to ${ssid}. Please try again.`);
+            for (let i = 5; i > 0; i--) {
+              this.$title.textContent = 'Not Connected';
+              this.$subtitle.textContent = `${deviceName} couldn't connect to ${ssid}.\n\nPlease try again in ${i}s...`;
+              await LuxioUtil.wait(1000);
+            }
           });
       }
+
+      this.$title.textContent = 'All done!';
+      this.$subtitle.textContent = `${deviceName} has been set up successfully.\n\nYou can now safely disconnect the device.`;
 
       // Set to Green
       for (let i = 0; i < 2; i++) {
@@ -278,9 +294,6 @@ export default class LuxioWeb {
 
       // TODO: LED Strip Type
       // TODO: LED Strip Count
-
-      this.$title.textContent = 'All done!';
-      this.$subtitle.textContent = `${deviceName} has been set up successfully.\n\nYou can now safely disconnect the device.`;
 
     }).catch(err => {
       console.error(err);

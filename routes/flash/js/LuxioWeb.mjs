@@ -12,6 +12,7 @@ export default class LuxioWeb {
   constructor() {
     this.$title = document.getElementById('title');
     this.$subtitle = document.getElementById('subtitle');
+    this.$throbber = document.getElementById('throbber');
     this.$stepFlash = document.getElementById('step-flash');
     this.$stepWiFi = document.getElementById('step-wifi');
     this.$flashButton = document.getElementById('flash-button');
@@ -107,6 +108,7 @@ export default class LuxioWeb {
       this.$stepWiFi.classList.add('is-visible');
       this.$title.textContent = 'Scanning...';
       this.$subtitle.textContent = 'Luxio is scanning for Wi-Fi networks...';
+      this.$throbber.classList.add('is-visible');
 
       // Open LuxioSerial
       if (!this.luxioSerial) {
@@ -135,7 +137,8 @@ export default class LuxioWeb {
 
         // Ask user to select network & enter password
         this.$title.textContent = 'Wi-Fi Networks';
-        this.$subtitle.textContent = `Choose the Wi-Fi network you want to connect to.`;
+        this.$subtitle.textContent = `Choose the Wi-Fi network you'd like to connect to.`;
+        this.$throbber.classList.remove('is-visible');
 
         const {
           ssid,
@@ -249,6 +252,7 @@ export default class LuxioWeb {
         // Connect to network
         this.$title.textContent = 'Connecting...';
         this.$subtitle.textContent = `${deviceName} is connecting to ${ssid}...`;
+        this.$throbber.classList.add('is-visible');
 
         await this.luxioSerial.wifi.connect({ ssid, pass });
 
@@ -274,8 +278,9 @@ export default class LuxioWeb {
             console.error(err);
 
             for (let i = 5; i > 0; i--) {
-              this.$title.textContent = 'Not Connected';
-              this.$subtitle.textContent = `${deviceName} couldn't connect to ${ssid}.\n\nPlease try again in ${i}s...`;
+              this.$title.textContent = 'Connecting Failed';
+              this.$subtitle.textContent = `${deviceName} couldn't connect to ${ssid}.\n\nTrying again in ${i}s...`;
+              this.$throbber.classList.remove('is-visible');
               await LuxioUtil.wait(1000);
             }
           });
@@ -283,6 +288,7 @@ export default class LuxioWeb {
 
       this.$title.textContent = 'All done!';
       this.$subtitle.textContent = `${deviceName} has been set up successfully.\n\nYou can now safely disconnect the device.`;
+      this.$throbber.classList.remove('is-visible');
 
       // Set to Green
       for (let i = 0; i < 2; i++) {

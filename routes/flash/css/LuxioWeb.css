@@ -43,9 +43,22 @@ body {
 #subtitle {
   color: var(--white);
   opacity: 0.5;
-  margin-bottom: 40px;
+  margin-bottom: 1em;
   text-align: center;
   white-space: pre;
+}
+
+#throbber {
+  width: 32px;
+  height: 32px;
+  background: #555;
+  -webkit-mask: url('../img/throbber.svg') no-repeat center;
+  -webkit-mask-size: contain;
+
+  display: none;
+}
+#throbber.is-visible {
+  display: block;
 }
 
 .step {

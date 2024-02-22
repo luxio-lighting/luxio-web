@@ -1,0 +1,333 @@
+:root {
+  --black: #000;
+  --white: #fff;
+  --luxio-blue: #00D2FF;
+  --luxio-green: #4FFF7F;
+  --luxio-mint: #2EECB6;
+  --luxio-gradient: linear-gradient(45deg, var(--luxio-blue), var(--luxio-green));
+}
+
+* {
+  margin: 0;
+  padding: 0;
+}
+
+html,
+body {
+  height: 100%;
+}
+
+body {
+  background-color: var(--black);
+  font-family: Nunito, sans-serif;
+}
+
+#wrap {
+  max-width: 600px;
+  margin: 0 auto;
+  padding-top: 35vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+#title {
+  display: inline-block;
+  background: var(--luxio-gradient);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+
+  margin-bottom: 5px;
+}
+
+#subtitle {
+  color: var(--white);
+  opacity: 0.5;
+  margin-bottom: 40px;
+  text-align: center;
+  white-space: pre;
+}
+
+.step {
+  align-self: stretch;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+
+  display: none;
+}
+
+.step.is-visible {
+  display: flex;
+}
+
+.button {
+  position: relative;
+  width: 200px;
+  height: 44px;
+  background: var(--luxio-gradient);
+  border-radius: 20px;
+  font-size: 16px;
+  font-weight: 500;
+  border: none;
+  margin-bottom: 20px;
+
+  overflow: hidden;
+
+  transition: height 1s 0s, width 1s 1s, opacity 1s;
+}
+
+.button.is-disabled {
+  filter: grayscale(100%);
+  opacity: 0.25;
+  pointer-events: none;
+}
+
+#flash-button.is-disabled>span {
+  background-color: #222;
+}
+
+#flash-button:not(.is-flashing) {
+  cursor: pointer;
+  transform: scale(1.0);
+  transition: transform 0.2s;
+}
+
+#flash-button:not(.is-flashing):hover {
+  transform: scale(1.05);
+}
+
+#flash-button:not(.is-flashing):active {
+  transform: scale(1.0);
+}
+
+#flash-button>span {
+  display: block;
+  box-sizing: border-box;
+  margin: 1px;
+  width: calc(100% - 2px);
+  height: 42px;
+  background: black;
+  border-radius: 20px;
+  text-align: center;
+
+  transition: all 1s;
+}
+
+#flash-button:not(.is-flashing)>span {
+  transition: all 0.2s;
+}
+
+#flash-button:not(.is-flashing):hover>span {
+  background-color: rgba(0, 0, 0, 0);
+}
+
+#flash-button>span>span {
+  background-image: var(--luxio-gradient);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+
+  line-height: 42px;
+  transition: all 0.2s;
+}
+
+#flash-button:not(.is-flashing):hover>span>span {
+  background-image: linear-gradient(45deg, var(--black), var(--black));
+}
+
+#flash-button.is-flashing {
+  width: 100%;
+  height: 6px;
+  background: #333;
+}
+
+#flash-button.is-flashing>span {
+  height: 4px;
+  border-radius: 2px;
+  opacity: 0;
+  /* width: 0%;
+  background: var(--luxio-gradient) */
+}
+
+#flash-button.is-flashing>span>span {
+  opacity: 0;
+  visibility: hidden;
+}
+
+#flash-progress {
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  background: var(--luxio-gradient);
+  border-radius: 2px;
+  width: 0%;
+
+  transition: width 2s linear;
+}
+
+#wifi-networks {
+  border: 1px solid #333;
+  border-radius: 10px;
+  width: 300px;
+  margin-bottom: 30px;
+}
+
+#wifi-networks:empty {
+  display: none;
+}
+
+.wifi-network {
+  color: white;
+  padding: 0 20px;
+  line-height: 50px;
+  border-bottom: 0px solid #333;
+
+  height: 0;
+  opacity: 0;
+  overflow: hidden;
+  text-indent: -10px;
+
+  transition: opacity 0.1s, height 0.1s, text-indent 0.1s 0.1s;
+}
+
+.wifi-network.is-visible {
+  height: 50px;
+  opacity: 1;
+  border-bottom-width: 1px;
+  text-indent: 0px;
+}
+.wifi-network.is-visible.is-selected {
+  height: 100px;
+}
+
+.wifi-network:last-child {
+  border-bottom: none;
+}
+
+.wifi-network:hover {
+  cursor: pointer;
+}
+
+.wifi-network-row {
+  display: flex;
+  align-items: center;
+  
+  transition: all 0.1s;
+}
+.wifi-network-row:last-child {
+  height: 0;
+  opacity: 0;
+  visibility: hidden;
+  align-items: flex-start;
+}
+.wifi-network-row,
+.wifi-network.is-selected .wifi-network-row:last-child {
+  height: 50px;
+  opacity: 1;
+  visibility: visible;
+}
+
+.wifi-network-name {
+  flex-grow: 1;
+  font-size: 16px;
+  font-weight: 500;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  margin-right: 10px;
+}
+.wifi-network:hover .wifi-network-name,
+.wifi-network.is-selected .wifi-network-name {
+  background: var(--luxio-gradient);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.wifi-network-icon {
+  width: 24px;
+  height: 24px;
+  background-size: contain;
+  background-repeat: no-repeat;
+  background-position: center center;
+}
+
+.wifi-network-icon[data-icon="good-secure"] {
+  background-image: url('../img/wifi-good-secure.svg');
+}
+
+.wifi-network-icon[data-icon="good-insecure"] {
+  background-image: url('../img/wifi-good-insecure.svg');
+}
+
+.wifi-network-icon[data-icon="poor-secure"] {
+  background-image: url('../img/wifi-poor-secure.svg');
+}
+
+.wifi-network-icon[data-icon="poor-insecure"] {
+  background-image: url('../img/wifi-poor-insecure.svg');
+}
+
+.wifi-network-password-outer {
+  background: var(--luxio-gradient);
+  border-radius: 8px;
+  box-sizing: border-box;
+  height: 40px;
+  padding: 1px;
+}
+.wifi-network-password-inner {
+  background: #000;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 38px;
+}
+
+.wifi-network-password-input-wrap {
+  flex-grow: 1;
+}
+.wifi-network-password-input {
+  box-sizing: border-box;
+  width: 100%;
+  height: 38px;
+  padding: 8px 12px;
+
+  border: none;
+  border-radius: 8px;
+  border-top-right-radius: 0;
+  border-bottom-right-radius: 0;
+  background: none;
+  outline: none;
+
+  color: #ccc;
+  font-family: monospace;
+  font-size: 14px;
+  font-weight: 500;
+}
+.wifi-network-connect {
+  box-sizing: border-box;
+  height: 38px;
+  line-height: 38px;
+
+  flex-shrink: 0;
+  flex-grow: 0;
+
+  padding: 0 12px;
+
+  border-radius: 8px;
+  border-top-left-radius: 0;
+  border-bottom-left-radius: 0;
+  
+  background: var(--luxio-gradient);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+
+  font-size: 16px;
+  font-weight: 500;
+}
+.wifi-network-connect:hover {
+  cursor: pointer;
+  -webkit-background-clip: none;
+
+}

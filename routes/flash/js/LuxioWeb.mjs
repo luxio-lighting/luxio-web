@@ -105,25 +105,25 @@ export default class LuxioWeb {
       this.$flashButton.style.opacity = 0;
       this.$stepFlash.classList.remove('is-visible');
 
-      this.$stepWiFi.classList.add('is-visible');
-      this.$title.textContent = 'Scanning...';
-      this.$subtitle.textContent = 'Luxio is scanning for Wi-Fi networks...';
-      this.$throbber.classList.add('is-visible');
-
-      // Open LuxioSerial
-      if (!this.luxioSerial) {
-        this.luxioSerial = new LuxioSerial({ device });
-        await this.luxioSerial.open();
-        await new Promise(resolve => {
-          this.luxioSerial.once('system.ready', resolve);
-        });
-      }
-
-      // Get Name
-      const deviceName = await this.luxioSerial.system.getName();
-
       let wifiConnected = false;
       while (wifiConnected === false) {
+        this.$stepWiFi.classList.add('is-visible');
+        this.$title.textContent = 'Scanning...';
+        this.$subtitle.textContent = 'Luxio is scanning for Wi-Fi networks...';
+        this.$throbber.classList.add('is-visible');
+
+        // Open LuxioSerial
+        if (!this.luxioSerial) {
+          this.luxioSerial = new LuxioSerial({ device });
+          await this.luxioSerial.open();
+          await new Promise(resolve => {
+            this.luxioSerial.once('system.ready', resolve);
+          });
+        }
+
+        // Get Name
+        const deviceName = await this.luxioSerial.system.getName();
+
         // Scan for Networks
         await this.luxioSerial.wifi.scanNetworks();
         const networks = await Promise.race([

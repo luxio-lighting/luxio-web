@@ -93,21 +93,21 @@ export default class LuxioWeb {
 
       // TODO: https://developer.chrome.com/docs/web-platform/view-transitions/
 
-      await esploader.writeFlash({
-        fileArray: [{
-          data: firmware,
-          address: 0x0,
-        }],
-        flashSize: 'keep',
-        eraseAll: true,
-        compress: true,
-        reportProgress(fileIndex, written, total) {
-          $flashProgress.style.width = written / total * 100 + '%';
-        },
-        // calculateMD5Hash: image => {
-        //  // TODO
-        // },
-      });
+      // await esploader.writeFlash({
+      //   fileArray: [{
+      //     data: firmware,
+      //     address: 0x0,
+      //   }],
+      //   flashSize: 'keep',
+      //   eraseAll: true,
+      //   compress: true,
+      //   reportProgress(fileIndex, written, total) {
+      //     $flashProgress.style.width = written / total * 100 + '%';
+      //   },
+      //   // calculateMD5Hash: image => {
+      //   //  // TODO
+      //   // },
+      // });
 
       await esploader.hardReset();
       await device.close();

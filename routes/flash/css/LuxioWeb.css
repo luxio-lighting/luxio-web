@@ -184,6 +184,9 @@ body {
   border: 1px solid #333;
   border-radius: 10px;
   width: 300px;
+  max-height: 70vh;
+  overflow-x: hidden;
+  overflow-y: auto;
   margin-bottom: 30px;
 }
 

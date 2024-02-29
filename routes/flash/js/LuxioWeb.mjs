@@ -284,18 +284,18 @@ export default class LuxioWeb {
               await LuxioUtil.wait(1000);
             }
           });
-      }
 
-      this.$title.textContent = 'All done!';
-      this.$subtitle.textContent = `${deviceName} has been set up successfully.\n\nYou can now safely disconnect the device.`;
-      this.$throbber.classList.remove('is-visible');
+        this.$title.textContent = 'All done!';
+        this.$subtitle.textContent = `${deviceName} has been set up successfully.\n\nYou can now safely disconnect the device.`;
+        this.$throbber.classList.remove('is-visible');
 
-      // Set to Green
-      for (let i = 0; i < 2; i++) {
-        await this.luxioSerial.led.setColor({ r: 0, g: 255, b: 0, w: 0 });
-        await new Promise(resolve => setTimeout(resolve, 300));
-        await this.luxioSerial.led.setColor({ r: 0, g: 0, b: 0, w: 255 }); // TODO: RGB
-        await new Promise(resolve => setTimeout(resolve, 300));
+        // Set to Green
+        for (let i = 0; i < 2; i++) {
+          await this.luxioSerial.led.setColor({ r: 0, g: 255, b: 0, w: 0 });
+          await new Promise(resolve => setTimeout(resolve, 300));
+          await this.luxioSerial.led.setColor({ r: 0, g: 0, b: 0, w: 255 }); // TODO: RGB
+          await new Promise(resolve => setTimeout(resolve, 300));
+        }
       }
 
       // TODO: LED Strip Type

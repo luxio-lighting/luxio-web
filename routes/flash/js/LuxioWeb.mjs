@@ -90,12 +90,61 @@ export default class LuxioWeb {
       this.$flashProgress.style.width = '2%';
 
       // Download Firmware
-      const firmware = await this.getFirmware();
+
+      const url = new URL('https://ota.luxio.lighting');
+      url.searchParams.append('platform', 'ESP8266');
+      url.searchParams.append('id', '00:00:00:00:00:00');
+      url.searchParams.append('version', '-1');
+
+      const res = await fetch(url);
+      if (res.status === 304) {
+        throw new Error('There is no firmware available.');
+      }
+      if (!res.ok) {
+        const body = await res.json();
+        if (body.error) {
+          throw new Error(body.error);
+        }
+
+        throw new Error('Failed to download the firmware.');
+      }
+
+      // TODO: Check MD5
+      const md5 = res.headers.get('x-MD5');
+
+      // Download Blob
+      const blob = await res.blob();
+
+      const reader = new FileReader();;
+      reader.readAsBinaryString(blob);
+
+      const firmware = await new Promise((resolve, reject) => {
+        reader.onload = () => {
+          resolve(reader.result);
+        };
+        reader.onerror = err => {
+          reject(err);
+        };
+      });
 
       this.$flashProgress.style.width = '3%';
 
       // Flash Firmware
-      await this.flashFirmware(firmware);
+      await esploader.writeFlash({
+        fileArray: [{
+          data: firmware,
+          address: 0x0,
+        }],
+        flashSize: 'keep',
+        eraseAll: true,
+        compress: true,
+        reportProgress: (fileIndex, written, total) => {
+          this.$flashProgress.style.width = written / total * 100 + '%';
+        },
+        // calculateMD5Hash: image => {
+        //  // TODO
+        // },
+      });
 
       // Reset & Disconnect ESPLoader
       await esploader.hardReset();
@@ -308,59 +357,6 @@ export default class LuxioWeb {
       document.querySelectorAll('.step').forEach($step => {
         $step.classList.remove('is-visible');
       });
-    });
-  }
-
-  async getFirmware() {
-    const url = new URL('https://ota.luxio.lighting');
-    url.searchParams.append('platform', 'ESP8266');
-    url.searchParams.append('id', '00:00:00:00:00:00');
-    url.searchParams.append('version', '-1');
-
-    const res = await fetch(url);
-    if (res.status === 304) {
-      throw new Error('There is no firmware available.');
-    }
-    if (!res.ok) {
-      const body = await res.json();
-      if (body.error) {
-        throw new Error(body.error);
-      }
-
-      throw new Error('Failed to download the firmware.');
-    }
-
-    // Download Blob
-    const blob = await res.blob();
-
-    const reader = new FileReader();;
-    reader.readAsBinaryString(blob);
-
-    return new Promise((resolve, reject) => {
-      reader.onload = () => {
-        resolve(reader.result);
-      };
-      reader.onerror = err => {
-        reject(err);
-      };
-    });
-  }
-
-  async flashFirmware(firmware) {
-    await esploader.writeFlash({
-      fileArray: [{
-        data: firmware,
-        address: 0x0,
-      }],
-      flashSize: 'keep',
-      eraseAll: true,
-      compress: true,
-      reportProgress(fileIndex, written, total) {
-        this.$flashProgress.style.width = written / total * 100 + '%';
-      },
-      // calculateMD5Hash: image => {
-      //  // TODO
-      // },
     });
   }
 

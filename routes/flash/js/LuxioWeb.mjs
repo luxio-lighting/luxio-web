@@ -90,13 +90,12 @@ export default class LuxioWeb {
       this.$flashProgress.style.width = '2%';
 
       // Download Firmware
-      // const firmware = await this.getFirmware();
+      const firmware = await this.getFirmware();
 
       this.$flashProgress.style.width = '3%';
 
-      // TODO: https://developer.chrome.com/docs/web-platform/view-transitions/
-
-      // await this.flashFirmware(firmware);
+      // Flash Firmware
+      await this.flashFirmware(firmware);
 
       // Reset & Disconnect ESPLoader
       await esploader.hardReset();
@@ -316,9 +315,7 @@ export default class LuxioWeb {
     const url = new URL('https://ota.luxio.lighting');
     url.searchParams.append('platform', 'ESP8266');
     url.searchParams.append('id', '00:00:00:00:00:00');
-    url.searchParams.append('version', '0.0');
-
-    // const url = './build/firmware.bin';
+    url.searchParams.append('version', '-1');
 
     const res = await fetch(url);
     if (res.status === 304) {

@@ -314,6 +314,32 @@ body {
 #step-config-type > #step-config-type-options > .step-config-type-option > input {
   margin: 10px auto;
   order: 2;
+
+  display: none;
+}
+
+#step-config-next {
+  margin-top: 30px;
+
+  border: none;
+  border-radius: 10px;
+  color: black;
+
+  background: var(--luxio-gradient);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+
+  font-size: 18px;
+  font-weight: 500;
+}
+#step-config-next,
+#step-config-next:active {
+  opacity: 0.8;
+  transition: opacity 0.1s;
+}
+#step-config-next:hover {
+  cursor: pointer;
+  opacity: 1.0;
 }
 
 
@@ -494,4 +520,25 @@ body {
 .wifi-network-connect:active {
   opacity: 0.8;
   transition: opacity 0.1s;
+}
+
+.wifi-network-name-input {
+  background: transparent;
+  border: none;
+  outline: none;
+  width: 100%;
+  font-size: inherit;
+}
+.wifi-network-name-input:focus,
+.wifi-network-name-input::placeholder {
+  background: transparent !important;
+  -webkit-background-clip: initial !important;
+  -webkit-text-fill-color: initial !important;
+  color: white !important;
+}
+.wifi-network-name-input::placeholder {
+  color: #666 !important;
+}
+.wifi-network-name-input:focus::placeholder {
+  color: transparent;
 }

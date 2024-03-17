@@ -23,6 +23,12 @@ export default class LuxioWeb {
       erase: searchParams.has('erase')
         ? searchParams.get('erase') === 'yes'
         : true,
+      config: searchParams.has('config')
+        ? searchParams.get('config') === 'yes'
+        : true,
+      wifi: searchParams.has('wifi')
+        ? searchParams.get('wifi') === 'yes'
+        : true,
     };
 
     this.$title = document.getElementById('title');
@@ -30,6 +36,7 @@ export default class LuxioWeb {
     this.$throbber = document.getElementById('throbber');
     this.$stepFlash = document.getElementById('step-flash');
     this.$stepConfig = document.getElementById('step-config');
+    this.$stepConfigNext = document.getElementById('step-config-next');
     this.$stepConfigNameInput = document.getElementById('step-config-name-input');
     this.$stepConfigTypeInputs = {
       'WS2812': document.getElementById('step-config-type-ws2812'),
@@ -209,165 +216,264 @@ export default class LuxioWeb {
       this.debug(`LED Pin: ${ledPin}`);
 
       // Show Config
-      await new Promise((resolve, reject) => {
-        this.$stepConfig.classList.add('is-visible');
-        this.$title.textContent = 'Setup your Luxio';
-        this.$subtitle.textContent = 'Configure Luxio to make it your own.';
+      if (this.options.config) {
+        await new Promise((resolve, reject) => {
+          this.$stepConfig.classList.add('is-visible');
+          this.$title.textContent = 'Setup your Luxio';
+          this.$subtitle.textContent = 'Configure Luxio to make it your own.';
 
-        // Name
-        this.$stepConfigNameInput.value = deviceName;
-        this.$stepConfigNameInput.placeholder = deviceName;
-        this.$stepConfigNameInput.addEventListener('change', e => {
-          const name = e.target.value;
-          if (name === '') {
-            this.$stepConfigNameInput.value = deviceName;
-            return;
-          }
+          // Name
+          this.$stepConfigNameInput.value = deviceName;
+          this.$stepConfigNameInput.placeholder = deviceName;
+          this.$stepConfigNameInput.addEventListener('change', e => {
+            const name = e.target.value;
+            if (name === '') {
+              this.$stepConfigNameInput.value = deviceName;
+              return;
+            }
 
-          this.luxioSerial.system.setName({ name })
-            .then(() => {
-              deviceName = name;
-            })
-            .catch(reject);
+            this.luxioSerial.system.setName({ name })
+              .then(() => {
+                deviceName = name;
+              })
+              .catch(reject);
+          });
+
+          // LED Type
+          this.$stepConfigTypeInputs[ledType].checked = true;
+          this.$stepConfigTypeInputs.WS2812.addEventListener('change', e => {
+            const type = e.target.value;
+
+            this.luxioSerial.led.setType({ type })
+              .then(() => {
+                ledType = type;
+              })
+              .catch(reject);
+          });
+
+          this.$stepConfigTypeInputs.SK6812.addEventListener('change', e => {
+            const type = e.target.value;
+
+            this.luxioSerial.led.setType({ type })
+              .then(() => {
+                ledType = type;
+              })
+              .catch(reject);
+          });
+
+          // LED Count
+          this.$stepConfigCountInput.value = ledCount;
+          this.$stepConfigCountInput.placeholder = `${this.$stepConfigCountInput.min} - ${this.$stepConfigCountInput.max}`;
+          this.$stepConfigCountInput.addEventListener('change', e => {
+            const count = Number(e.target.value);
+            if (Number.isNaN(count) || count < e.target.min || count > e.target.max) {
+              this.$stepConfigCountInput.value = ledCount;
+              return;
+            }
+
+            this.luxioSerial.led.setCount({ count })
+              .then(() => {
+                ledCount = count;
+              })
+              .catch(reject);
+          });
+
+          // LED Pin
+          this.$stepConfigPinInput.value = ledPin;
+          this.$stepConfigPinInput.addEventListener('change', e => {
+            const pin = Number(e.target.value);
+
+            this.luxioSerial.led.setPin({ pin })
+              .then(() => {
+                ledPin = pin;
+              })
+              .catch(reject);
+          });
+
+          // Next
+          this.$stepConfigNext.addEventListener('click', () => {
+            this.$stepConfig.classList.remove('is-visible');
+            resolve();
+          });
         });
-
-        // LED Type
-        this.$stepConfigTypeInputs[ledType].selected = true;
-        this.$stepConfigTypeInputs.WS2812.addEventListener('change', e => {
-          const type = e.target.value;
-
-          this.luxioSerial.led.setType({ type })
-            .then(() => {
-              ledType = type;
-            })
-            .catch(reject);
-        });
-
-        this.$stepConfigTypeInputs.SK6812.addEventListener('change', e => {
-          const type = e.target.value;
-
-          this.luxioSerial.led.setType({ type })
-            .then(() => {
-              ledType = type;
-            })
-            .catch(reject);
-        });
-
-        // LED Count
-        this.$stepConfigCountInput.value = ledCount;
-        this.$stepConfigCountInput.placeholder = `${this.$stepConfigCountInput.min} - ${this.$stepConfigCountInput.max}`;
-        this.$stepConfigCountInput.addEventListener('change', e => {
-          const count = Number(e.target.value);
-          if (Number.isNaN(count) || count < e.target.min || count > e.target.max) {
-            this.$stepConfigCountInput.value = ledCount;
-            return;
-          }
-
-          this.luxioSerial.led.setCount({ count })
-            .then(() => {
-              ledCount = count;
-            })
-            .catch(reject);
-        });
-
-        // LED Pin
-        this.$stepConfigPinInput.value = ledPin;
-        this.$stepConfigPinInput.addEventListener('change', e => {
-          const pin = Number(e.target.value);
-
-          this.luxioSerial.led.setPin({ pin })
-            .then(() => {
-              ledPin = pin;
-            })
-            .catch(reject);
-        });
-
-        // TODO: Continue button should resolve()
-      });
+      }
 
       // Connect to Wi-Fi
-      let wifiConnected = false;
-      while (wifiConnected === false) {
-        this.$stepWiFi.classList.add('is-visible');
-        this.$title.textContent = 'Scanning...';
-        this.$subtitle.textContent = 'Luxio is scanning for Wi-Fi networks...';
-        this.$throbber.classList.add('is-visible');
+      if (this.options.wifi) {
+        let wifiConnected = false;
+        while (wifiConnected === false) {
+          this.$stepWiFi.classList.add('is-visible');
+          this.$title.textContent = 'Scanning...';
+          this.$subtitle.textContent = 'Luxio is scanning for Wi-Fi networks...';
+          this.$throbber.classList.add('is-visible');
 
-        // Scan for Networks
-        await this.luxioSerial.wifi.scanNetworks();
-        const networks = await Promise.race([
-          new Promise(resolve => {
-            this.luxioSerial.once('wifi.networks', resolve);
-          }),
-          LuxioUtil.wait(10000).then(() => {
-            throw new Error('Failed to scan networks');
-          }),
-        ]);
+          // Scan for Networks
+          await this.luxioSerial.wifi.scanNetworks();
+          const networks = await Promise.race([
+            new Promise(resolve => {
+              this.luxioSerial.once('wifi.networks', resolve);
+            }),
+            LuxioUtil.wait(10000).then(() => {
+              throw new Error('Failed to scan networks');
+            }),
+          ]);
 
-        // Ask user to select network & enter password
-        this.$title.textContent = 'Wi-Fi Networks';
-        this.$subtitle.textContent = `Choose the Wi-Fi network you'd like to connect to.`;
-        this.$throbber.classList.remove('is-visible');
+          // Ask user to select network & enter password
+          this.$title.textContent = 'Wi-Fi Networks';
+          this.$subtitle.textContent = Object.values(networks).length > 0
+            ? `Choose the Wi-Fi network you'd like to connect to.`
+            : `No networks have been found. However, you can connect to a network manually.`;
+          this.$throbber.classList.remove('is-visible');
 
-        const {
-          ssid,
-          pass,
-        } = await new Promise((resolve, reject) => {
-          const networksObj = networks.reduce((result, network) => {
-            // Skip if we already have a network with a stronger signal
-            if (result[network.ssid] && result[network.ssid].rssi > network.rssi) return result;
+          const {
+            ssid,
+            pass,
+          } = await new Promise((resolve, reject) => {
+            const networksObj = networks.reduce((result, network) => {
+              // Skip if we already have a network with a stronger signal
+              if (result[network.ssid] && result[network.ssid].rssi > network.rssi) return result;
 
-            result[network.ssid] = network;
-            return result;
-          }, {});
+              result[network.ssid] = network;
+              return result;
+            }, {});
 
-          // Sort by signal strength
-          const networksArr = Object.values(networksObj).sort((a, b) => b.rssi - a.rssi);
+            // Sort by signal strength
+            const networksArr = Object.values(networksObj).sort((a, b) => b.rssi - a.rssi);
 
-          // Render networks
-          for (const [i, network] of Object.entries(networksArr)) {
-            const $wifiNetwork = document.createElement('div');
-            $wifiNetwork.classList.add('wifi-network');
-            $wifiNetwork.addEventListener('click', async () => {
-              // Hide others
-              for (const $network of this.$wifiNetworks.querySelectorAll('.wifi-network')) {
-                $network.classList.remove('is-selected');
+            // Render networks
+            for (const [i, network] of Object.entries(networksArr)) {
+              const $wifiNetwork = document.createElement('div');
+              $wifiNetwork.classList.add('wifi-network');
+              $wifiNetwork.addEventListener('click', async () => {
+                // Hide others
+                for (const $network of this.$wifiNetworks.querySelectorAll('.wifi-network')) {
+                  $network.classList.remove('is-selected');
+                }
+
+                $wifiNetworkHiddenName.value = '';
+                $wifiNetworkHiddenPasswordInput.value = '';
+
+                $wifiNetwork.classList.add('is-selected');
+
+                setTimeout(() => {
+                  if ($wifiNetworkPasswordInput) {
+                    $wifiNetworkPasswordInput.focus();
+                  }
+                }, 100);
+              });
+              this.$wifiNetworks.appendChild($wifiNetwork);
+
+              const $wifiNetworkRowTop = document.createElement('div');
+              $wifiNetworkRowTop.classList.add('wifi-network-row');
+              $wifiNetworkRowTop.classList.add('is-visible');
+              $wifiNetwork.appendChild($wifiNetworkRowTop);
+
+              const $wifiNetworkName = document.createElement('div');
+              $wifiNetworkName.classList.add('wifi-network-name');
+              $wifiNetworkName.textContent = network.ssid;
+              $wifiNetworkRowTop.appendChild($wifiNetworkName);
+
+              const $wifiNetworkIcon = document.createElement('div');
+              $wifiNetworkIcon.classList.add('wifi-network-icon');
+              $wifiNetworkIcon.dataset.icon = network.encryption === 'none'
+                ? network.rssi > -55
+                  ? 'good-insecure'
+                  : 'poor-insecure'
+                : network.rssi > -55
+                  ? 'good-secure'
+                  : 'poor-secure';
+              $wifiNetworkRowTop.appendChild($wifiNetworkIcon);
+
+              const $wifiNetworkRowBottom = document.createElement('div');
+              $wifiNetworkRowBottom.classList.add('wifi-network-row');
+              $wifiNetwork.appendChild($wifiNetworkRowBottom);
+
+              const $wifiNetworkPasswordOuter = document.createElement('div');
+              $wifiNetworkPasswordOuter.classList.add('wifi-network-password-outer');
+              $wifiNetworkRowBottom.appendChild($wifiNetworkPasswordOuter);
+
+              const $wifiNetworkPasswordInner = document.createElement('div');
+              $wifiNetworkPasswordInner.classList.add('wifi-network-password-inner');
+              $wifiNetworkPasswordOuter.appendChild($wifiNetworkPasswordInner);
+
+              let $wifiNetworkPasswordInputWrap;
+              let $wifiNetworkPasswordInput;
+              if (network.encryption !== 'none') {
+                $wifiNetworkPasswordInputWrap = document.createElement('div');
+                $wifiNetworkPasswordInputWrap.classList.add('wifi-network-password-input-wrap');
+                $wifiNetworkPasswordInner.appendChild($wifiNetworkPasswordInputWrap);
+
+                $wifiNetworkPasswordInput = document.createElement('input');
+                $wifiNetworkPasswordInput.classList.add('wifi-network-password-input');
+                $wifiNetworkPasswordInput.type = 'text';
+                $wifiNetworkPasswordInput.placeholder = 'Password';
+                $wifiNetworkPasswordInput.addEventListener('keydown', e => {
+                  if (e.key === 'Enter') {
+                    $wikiNetworkConnect.click();
+                  }
+                });
+                $wifiNetworkPasswordInputWrap.appendChild($wifiNetworkPasswordInput);
               }
 
-              $wifiNetwork.classList.add('is-selected');
+              const $wikiNetworkConnect = document.createElement('div');
+              $wikiNetworkConnect.classList.add('wifi-network-connect');
+              $wikiNetworkConnect.textContent = 'Connect';
+              $wikiNetworkConnect.addEventListener('click', async () => {
+                let pass = '';
+                if ($wifiNetworkPasswordInput) {
+                  pass = $wifiNetworkPasswordInput.value;
+                  if (!pass) return;
+                }
+
+                resolve({ ssid: network.ssid, pass });
+              });
+              $wifiNetworkPasswordInner.appendChild($wikiNetworkConnect);
 
               setTimeout(() => {
-                if ($wifiNetworkPasswordInput) {
-                  $wifiNetworkPasswordInput.focus();
-                }
+                $wifiNetwork.classList.add('is-visible');
+              }, i * 50);
+            }
+
+            // Hidden Network
+            const $wifiNetworkHidden = document.createElement('div');
+            $wifiNetworkHidden.classList.add('wifi-network');
+            $wifiNetworkHidden.addEventListener('click', async () => {
+              setTimeout(() => {
+                $wifiNetworkHiddenName.focus();
               }, 100);
             });
-            this.$wifiNetworks.appendChild($wifiNetwork);
+            this.$wifiNetworks.appendChild($wifiNetworkHidden);
 
             const $wifiNetworkRowTop = document.createElement('div');
             $wifiNetworkRowTop.classList.add('wifi-network-row');
             $wifiNetworkRowTop.classList.add('is-visible');
-            $wifiNetwork.appendChild($wifiNetworkRowTop);
+            $wifiNetworkHidden.appendChild($wifiNetworkRowTop);
 
-            const $wifiNetworkName = document.createElement('div');
-            $wifiNetworkName.classList.add('wifi-network-name');
-            $wifiNetworkName.textContent = network.ssid;
-            $wifiNetworkRowTop.appendChild($wifiNetworkName);
+            const $wifiNetworkHiddenName = document.createElement('input');
+            $wifiNetworkHiddenName.classList.add('wifi-network-name');
+            $wifiNetworkHiddenName.classList.add('wifi-network-name-input');
+            $wifiNetworkHiddenName.placeholder = 'Hidden Network...';
+            $wifiNetworkHiddenName.addEventListener('focus', () => {
+              // Hide others
+              for (const $network of this.$wifiNetworks.querySelectorAll('.wifi-network')) {
+                $network.classList.remove('is-selected');
+              }
+            });
+            $wifiNetworkHiddenName.addEventListener('keyup', () => {
+              if ($wifiNetworkHiddenName.value.length) {
+                // Hide others
+                for (const $network of this.$wifiNetworks.querySelectorAll('.wifi-network')) {
+                  $network.classList.remove('is-selected');
+                }
 
-            const $wifiNetworkIcon = document.createElement('div');
-            $wifiNetworkIcon.classList.add('wifi-network-icon');
-            $wifiNetworkIcon.dataset.icon = network.encryption === 'none'
-              ? network.rssi > -55
-                ? 'good-insecure'
-                : 'poor-insecure'
-              : network.rssi > -55
-                ? 'good-secure'
-                : 'poor-secure';
-            $wifiNetworkRowTop.appendChild($wifiNetworkIcon);
+                $wifiNetworkHidden.classList.add('is-selected');
+              }
+            });
+            $wifiNetworkRowTop.appendChild($wifiNetworkHiddenName);
 
             const $wifiNetworkRowBottom = document.createElement('div');
             $wifiNetworkRowBottom.classList.add('wifi-network-row');
-            $wifiNetwork.appendChild($wifiNetworkRowBottom);
+            $wifiNetworkHidden.appendChild($wifiNetworkRowBottom);
 
             const $wifiNetworkPasswordOuter = document.createElement('div');
             $wifiNetworkPasswordOuter.classList.add('wifi-network-password-outer');
@@ -377,85 +483,81 @@ export default class LuxioWeb {
             $wifiNetworkPasswordInner.classList.add('wifi-network-password-inner');
             $wifiNetworkPasswordOuter.appendChild($wifiNetworkPasswordInner);
 
-            let $wifiNetworkPasswordInputWrap;
-            let $wifiNetworkPasswordInput;
-            if (network.encryption !== 'none') {
-              $wifiNetworkPasswordInputWrap = document.createElement('div');
-              $wifiNetworkPasswordInputWrap.classList.add('wifi-network-password-input-wrap');
-              $wifiNetworkPasswordInner.appendChild($wifiNetworkPasswordInputWrap);
+            const $wifiNetworkPasswordInputWrap = document.createElement('div');
+            $wifiNetworkPasswordInputWrap.classList.add('wifi-network-password-input-wrap');
+            $wifiNetworkPasswordInner.appendChild($wifiNetworkPasswordInputWrap);
 
-              $wifiNetworkPasswordInput = document.createElement('input');
-              $wifiNetworkPasswordInput.classList.add('wifi-network-password-input');
-              $wifiNetworkPasswordInput.type = 'text';
-              $wifiNetworkPasswordInput.placeholder = 'Password';
-              $wifiNetworkPasswordInput.addEventListener('keydown', e => {
-                if (e.key === 'Enter') {
-                  $wikiNetworkConnect.click();
-                }
-              });
-              $wifiNetworkPasswordInputWrap.appendChild($wifiNetworkPasswordInput);
-            }
-
-            const $wikiNetworkConnect = document.createElement('div');
-            $wikiNetworkConnect.classList.add('wifi-network-connect');
-            $wikiNetworkConnect.textContent = 'Connect';
-            $wikiNetworkConnect.addEventListener('click', async () => {
-              let pass = '';
-              if ($wifiNetworkPasswordInput) {
-                pass = $wifiNetworkPasswordInput.value;
-                if (!pass) return;
+            const $wifiNetworkHiddenPasswordInput = document.createElement('input');
+            $wifiNetworkHiddenPasswordInput.classList.add('wifi-network-password-input');
+            $wifiNetworkHiddenPasswordInput.type = 'text';
+            $wifiNetworkHiddenPasswordInput.placeholder = 'Password';
+            $wifiNetworkHiddenPasswordInput.addEventListener('keydown', e => {
+              if (e.key === 'Enter') {
+                $wikiNetworkHiddenConnect.click();
               }
-
-              resolve({ ssid: network.ssid, pass });
             });
-            $wifiNetworkPasswordInner.appendChild($wikiNetworkConnect);
+            $wifiNetworkHiddenPasswordInput.addEventListener('click', e => {
+              e.stopPropagation();
+            });
+            $wifiNetworkPasswordInputWrap.appendChild($wifiNetworkHiddenPasswordInput);
+
+            const $wikiNetworkHiddenConnect = document.createElement('div');
+            $wikiNetworkHiddenConnect.classList.add('wifi-network-connect');
+            $wikiNetworkHiddenConnect.textContent = 'Connect';
+            $wikiNetworkHiddenConnect.addEventListener('click', async () => {
+              let ssid = $wifiNetworkHiddenName.value;
+              if (!ssid) return;
+
+              let pass = $wifiNetworkHiddenPasswordInput.value;
+
+              resolve({ ssid, pass });
+            });
+            $wifiNetworkPasswordInner.appendChild($wikiNetworkHiddenConnect);
 
             setTimeout(() => {
-              $wifiNetwork.classList.add('is-visible');
-            }, i * 50);
-          }
+              $wifiNetworkHidden.classList.add('is-visible');
+            }, Object.keys(networks).length * 50);
 
-          // TODO: Add Custom
-
-        });
-
-        this.$wifiNetworks.innerHTML = '';
-
-        // Connect to network
-        this.$title.textContent = 'Connecting...';
-        this.$subtitle.textContent = `${deviceName} is connecting to ${ssid}...`;
-        this.$throbber.classList.add('is-visible');
-
-        await this.luxioSerial.wifi.connect({ ssid, pass });
-
-        // Poll wifi.getState until connected
-        await Promise.race([
-          new Promise((resolve, reject) => {
-            this.luxioSerial.on('wifi.ip', state => {
-              resolve();
-            });
-
-            this.luxioSerial.once('wifi.disconnected', ({ reason }) => {
-              reject(new Error(`Reason: ${reason}`));
-            });
-          }),
-          LuxioUtil.wait(15000).then(() => {
-            throw new Error('Timeout getting state');
-          }),
-        ])
-          .then(() => {
-            wifiConnected = true;
-          })
-          .catch(async err => {
-            console.error(err);
-
-            for (let i = 5; i > 0; i--) {
-              this.$title.textContent = 'Connecting Failed';
-              this.$subtitle.textContent = `${deviceName} couldn't connect to ${ssid}.\n\nTrying again in ${i}s...`;
-              this.$throbber.classList.remove('is-visible');
-              await LuxioUtil.wait(1000);
-            }
           });
+
+          this.$wifiNetworks.innerHTML = '';
+
+          // Connect to network
+          this.$title.textContent = 'Connecting...';
+          this.$subtitle.textContent = `${deviceName} is connecting to ${ssid}...`;
+          this.$throbber.classList.add('is-visible');
+
+          await this.luxioSerial.wifi.connect({ ssid, pass });
+
+          // Poll wifi.getState until connected
+          await Promise.race([
+            new Promise((resolve, reject) => {
+              this.luxioSerial.on('wifi.ip', state => {
+                resolve();
+              });
+
+              this.luxioSerial.once('wifi.disconnected', ({ reason }) => {
+                reject(new Error(`Reason: ${reason}`));
+              });
+            }),
+            LuxioUtil.wait(15000).then(() => {
+              throw new Error('Timeout getting state');
+            }),
+          ])
+            .then(() => {
+              wifiConnected = true;
+            })
+            .catch(async err => {
+              console.error(err);
+
+              for (let i = 5; i > 0; i--) {
+                this.$title.textContent = 'Connecting Failed';
+                this.$subtitle.textContent = `${deviceName} couldn't connect to ${ssid}.\n\nTrying again in ${i}s...`;
+                this.$throbber.classList.remove('is-visible');
+                await LuxioUtil.wait(1000);
+              }
+            });
+        }
 
         this.$title.textContent = 'All done!';
         this.$subtitle.textContent = `${deviceName} has been set up successfully.\n\nYou can now safely disconnect the device.`;

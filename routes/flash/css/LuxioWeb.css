@@ -180,6 +180,147 @@ body {
   transition: width 2s linear;
 }
 
+/*
+ * Step: Config
+ */
+
+#step-config {
+  width: 300px;
+  align-self: center;
+}
+#step-config > #step-config-name,
+#step-config > #step-config-type,
+#step-config > #step-config-count,
+#step-config > #step-config-pin {
+  display: flex;
+  flex-direction: column;
+  margin-bottom: 20px;
+}
+#step-config > #step-config-name > #step-config-name-label,
+#step-config > #step-config-type > #step-config-type-label,
+#step-config > #step-config-count > #step-config-count-label,
+#step-config > #step-config-pin > #step-config-pin-label {
+  text-indent: 10px;
+  font-size: 12px;
+  font-weight: 500;
+  color: #999;
+  margin-bottom: 5px;
+}
+#step-config > #step-config-name > #step-config-name-input,
+#step-config > #step-config-count > #step-config-count-input,
+#step-config > #step-config-pin > #step-config-pin-input {
+  background: transparent;
+  border: none;
+  outline: none;
+
+  box-sizing: border-box;
+  width: 220px;
+  padding: 10px 14px;
+
+  border: 1px solid #333;
+  border-radius: 10px;
+
+  color: #ccc;
+  font-size: 16px;
+  font-weight: 500;
+
+  transition: border-color 0.1s;
+}
+#step-config > #step-config-name > #step-config-name-input:focus,
+#step-config > #step-config-count > #step-config-count-input:focus,
+#step-config > #step-config-pin > #step-config-pin-input:focus {
+  border-color: #666;
+}
+#step-config > #step-config-name > #step-config-name-input::selection,
+#step-config > #step-config-count > #step-config-count-input::selection,
+#step-config > #step-config-pin > #step-config-pin-input::selection {
+  background-color: var(--luxio-mint);
+  color: #000;
+}
+
+#step-config-type {
+}
+#step-config-type > #step-config-type-options {
+  display: flex;
+  flex-direction: row;
+}
+
+#step-config-type > #step-config-type-options > .step-config-type-option {
+  flex-grow: 0;
+  flex-shrink: 0;
+
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+
+  cursor: pointer;
+}
+
+#step-config-type > #step-config-type-options > .step-config-type-option > label {
+  position: relative;
+  order: 1;
+  
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+
+  cursor: pointer;
+
+  color: #ccc;
+  width: 100px;
+  height: 100px;
+}
+#step-config-type > #step-config-type-options > .step-config-type-option > label:before {
+  display: block;
+  content: "";
+  position: absolute;
+  z-index: -2;
+  left: 0;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  border-radius: 10px;
+
+  background: #333;
+  transition: background 0.1s;
+}
+#step-config-type > #step-config-type-options > .step-config-type-option:hover > label:before {
+  background: #666;
+}
+#step-config-type > #step-config-type-options > .step-config-type-option > input:checked + label:before {
+  background: var(--luxio-gradient);
+}
+#step-config-type > #step-config-type-options > .step-config-type-option > label:after {
+  display: block;
+  content: "";
+  position: absolute;
+  z-index: -1;
+  left: 1px;
+  top: 1px;
+  right: 1px;
+  bottom: 1px;
+  border-radius: 10px;
+
+  background: var(--black)
+}
+#step-config-type > #step-config-type-options > .step-config-type-option:first-child {
+  margin-right: 10px; /* TODO: Grid */
+}
+#step-config-type > #step-config-type-options > .step-config-type-option > label > span {
+  opacity: 0.5;
+}
+
+#step-config-type > #step-config-type-options > .step-config-type-option > input {
+  margin: 10px auto;
+  order: 2;
+}
+
+
+/*
+ * Step: Wi-Fi
+ */
+
 #wifi-networks {
   border: 1px solid #333;
   border-radius: 10px;

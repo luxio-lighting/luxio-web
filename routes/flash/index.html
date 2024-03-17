@@ -33,7 +33,7 @@
 
     <div
       id="step-flash"
-      class="step is-visible"
+      class="step"
     >
       <div
         id="flash-button"
@@ -44,6 +44,75 @@
         </span>
         <div id="flash-progress"></div>
       </div>
+    </div>
+
+    <div
+      id="step-config"
+      class="step"
+    >
+      <div id="step-config-name">
+        <label
+          id="step-config-name-label"
+          for="step-config-name-input"
+        >Name</label>
+
+        <input
+          id="step-config-name-input"
+          type="text"
+          value="Luxio-ABCDEF"
+          placeholder="Luxio-ABCDEF"
+        />
+      </div>
+
+      <div id="step-config-type">
+        <label id="step-config-type-label">LED Type</label>
+
+        <div id="step-config-type-options">
+          <div class="step-config-type-option">
+            <input
+              id="step-config-type-ws2812"
+              type="radio"
+              name="step-config-type"
+              value="WS2812"
+            />
+            <label for="step-config-type-ws2812">WS2812 <span>RGB</span></label>
+          </div>
+          <div class="step-config-type-option">
+            <input
+              id="step-config-type-sk6812"
+              type="radio"
+              name="step-config-type"
+              value="SK6812"
+            />
+            <label for="step-config-type-sk6812">SK6812 <span>RGBW</span></label>
+          </div>
+        </div>
+      </div>
+
+      <div id="step-config-count">
+        <label id="step-config-count-label">LED Count</label>
+        <input
+          id="step-config-count-input"
+          type="number"
+          value="60"
+          min="1"
+          max="512"
+          step="1"
+        >
+      </div>
+
+      <div id="step-config-pin">
+        <label id="step-config-pin-label">LED Pin</label>
+        <select id="step-config-pin-input">
+          <option value="0">GPIO 0</option>
+          <!-- <option value="1">GPIO 1</option> -->
+          <option value="2">GPIO 2</option>
+          <!-- <option value="3">GPIO 3</option> -->
+          <!-- <option value="4">GPIO 4</option>
+          <option value="5">GPIO 5</option> -->
+        </select>
+      </div>
+
     </div>
 
     <div

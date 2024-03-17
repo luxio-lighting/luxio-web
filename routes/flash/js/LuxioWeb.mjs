@@ -9,11 +9,34 @@ export default class LuxioWeb {
 
   luxioSerial = null;
 
+  debug(...props) {
+    console.log('[LuxioWeb]', ...props);
+  }
+
   constructor() {
+    const searchParams = new URL(window.location.href).searchParams;
+
+    this.options = {
+      flash: searchParams.has('flash')
+        ? searchParams.get('flash') === 'yes'
+        : true,
+      erase: searchParams.has('erase')
+        ? searchParams.get('erase') === 'yes'
+        : true,
+    };
+
     this.$title = document.getElementById('title');
     this.$subtitle = document.getElementById('subtitle');
     this.$throbber = document.getElementById('throbber');
     this.$stepFlash = document.getElementById('step-flash');
+    this.$stepConfig = document.getElementById('step-config');
+    this.$stepConfigNameInput = document.getElementById('step-config-name-input');
+    this.$stepConfigTypeInputs = {
+      'WS2812': document.getElementById('step-config-type-ws2812'),
+      'SK6812': document.getElementById('step-config-type-sk6812'),
+    };
+    this.$stepConfigCountInput = document.getElementById('step-config-count-input');
+    this.$stepConfigPinInput = document.getElementById('step-config-pin-input');
     this.$stepWiFi = document.getElementById('step-wifi');
     this.$flashButton = document.getElementById('flash-button');
     this.$flashProgress = document.getElementById('flash-progress');
@@ -24,7 +47,7 @@ export default class LuxioWeb {
         throw new Error('Please use Google Chrome, Microsoft Edge or Opera.');
       }
 
-      // Show Flash step
+      // // Show Flash step
       this.$stepFlash.classList.add('is-visible');
 
       // Get Device
@@ -34,7 +57,7 @@ export default class LuxioWeb {
           if (this.$flashButton.classList.contains('is-disabled')) return;
 
           navigator.serial.requestPort({
-            filters: e.altKey
+            filters: e.altKey // Show all devices when ALT is pressed
               ? []
               : [
                 { usbVendorId: 0x1A86 }, // CH341 USB Serial (Wemos D1 Mini)
@@ -51,6 +74,7 @@ export default class LuxioWeb {
       // Animate button
       this.$flashButton.classList.add('is-flashing');
 
+      // TODO: Once done this fires
       device.addEventListener('disconnect', () => {
         this.$title.textContent = 'Device disconnected.';
         this.$subtitle.textContent = 'Please reconnect the device and try again.';
@@ -66,21 +90,21 @@ export default class LuxioWeb {
         transport,
         baudrate: 115200,
         terminal: {
-          clean() {
-            console.log('[Terminal:clean]');
+          clean: () => {
+            this.debug('[Terminal:clean]');
           },
-          writeLine(line) {
-            console.log('[Terminal:line]', line);
+          writeLine: (line) => {
+            this.debug('[Terminal:line]', line);
           },
-          write(data) {
-            console.log('[Terminal:write]', data);
+          write: (data) => {
+            this.debug('[Terminal:write]', data);
           },
         },
       });
 
       // Get Chip
       const chip = await esploader.main();
-      console.log(`Chip: ${chip}`);
+      this.debug(`Chip: ${chip}`);
       if (!chip.startsWith('ESP8266')) {
         throw new Error(`Unknown Chip: ${chip}`);
       }
@@ -90,87 +114,184 @@ export default class LuxioWeb {
       this.$flashProgress.style.width = '2%';
 
       // Download Firmware
+      if (this.options.flash) {
+        // const url = new URL('https://ota.luxio.lighting');
+        const url = new URL('http://localhost:4000/ota');
+        url.searchParams.append('platform', 'ESP8266');
+        url.searchParams.append('id', '00:00:00:00:00:00');
+        url.searchParams.append('version', '-1');
 
-      const url = new URL('https://ota.luxio.lighting');
-      url.searchParams.append('platform', 'ESP8266');
-      url.searchParams.append('id', '00:00:00:00:00:00');
-      url.searchParams.append('version', '-1');
+        const res = await fetch(url);
+        if (res.status === 304) {
+          throw new Error('There is no firmware available.');
+        }
+        if (!res.ok) {
+          const body = await res.json();
+          if (body.error) {
+            throw new Error(body.error);
+          }
 
-      const res = await fetch(url);
-      if (res.status === 304) {
-        throw new Error('There is no firmware available.');
-      }
-      if (!res.ok) {
-        const body = await res.json();
-        if (body.error) {
-          throw new Error(body.error);
+          throw new Error('Failed to download the firmware.');
         }
 
-        throw new Error('Failed to download the firmware.');
+        // TODO: Check MD5
+        const md5 = res.headers.get('x-MD5');
+
+        // Download Blob
+        const blob = await res.blob();
+
+        const reader = new FileReader();;
+        reader.readAsBinaryString(blob);
+
+        const firmware = await new Promise((resolve, reject) => {
+          reader.onload = () => {
+            resolve(reader.result);
+          };
+          reader.onerror = err => {
+            reject(err);
+          };
+        });
+
+        this.$flashProgress.style.width = '3%';
+
+        // Flash Firmware
+        await esploader.writeFlash({
+          fileArray: [{
+            data: firmware,
+            address: 0x0,
+          }],
+          flashSize: 'keep',
+          eraseAll: this.options.erase,
+          compress: true,
+          reportProgress: (fileIndex, written, total) => {
+            this.$flashProgress.style.width = 4 + (written / total * (100 - 4)) + '%';
+          },
+          // calculateMD5Hash: image => {
+          //  // TODO
+          // },
+        });
       }
-
-      // TODO: Check MD5
-      const md5 = res.headers.get('x-MD5');
-
-      // Download Blob
-      const blob = await res.blob();
-
-      const reader = new FileReader();;
-      reader.readAsBinaryString(blob);
-
-      const firmware = await new Promise((resolve, reject) => {
-        reader.onload = () => {
-          resolve(reader.result);
-        };
-        reader.onerror = err => {
-          reject(err);
-        };
-      });
-
-      this.$flashProgress.style.width = '3%';
-
-      // Flash Firmware
-      await esploader.writeFlash({
-        fileArray: [{
-          data: firmware,
-          address: 0x0,
-        }],
-        flashSize: 'keep',
-        eraseAll: true,
-        compress: true,
-        reportProgress: (fileIndex, written, total) => {
-          this.$flashProgress.style.width = written / total * 100 + '%';
-        },
-        // calculateMD5Hash: image => {
-        //  // TODO
-        // },
-      });
 
       // Reset & Disconnect ESPLoader
       await esploader.hardReset();
       await transport.disconnect();
 
-      this.$flashButton.style.opacity = 0;
+      // this.$flashButton.style.opacity = 0;
       this.$stepFlash.classList.remove('is-visible');
 
+      // Connect to Luxio over Serial
+      let serialConnected = false;
+      while (serialConnected === false) {
+        if (!this.luxioSerial) {
+          this.luxioSerial = new LuxioSerial({ device });
+          await this.luxioSerial.open();
+          await new Promise(resolve => {
+            this.luxioSerial.once('system.ready', () => {
+              this.debug('System Ready');
+              serialConnected = true;
+              resolve();
+            });
+          });
+        }
+      }
+
+      // Get Initial Config
+      let deviceName = await this.luxioSerial.system.getName();
+      this.debug(`Device Name: ${deviceName}`);
+
+      let ledType = await this.luxioSerial.led.getType();
+      this.debug(`LED Type: ${ledType}`);
+
+      let ledCount = await this.luxioSerial.led.getCount();
+      this.debug(`LED Count: ${ledCount}`);
+
+      let ledPin = await this.luxioSerial.led.getPin();
+      this.debug(`LED Pin: ${ledPin}`);
+
+      // Show Config
+      await new Promise((resolve, reject) => {
+        this.$stepConfig.classList.add('is-visible');
+        this.$title.textContent = 'Setup your Luxio';
+        this.$subtitle.textContent = 'Configure Luxio to make it your own.';
+
+        // Name
+        this.$stepConfigNameInput.value = deviceName;
+        this.$stepConfigNameInput.placeholder = deviceName;
+        this.$stepConfigNameInput.addEventListener('change', e => {
+          const name = e.target.value;
+          if (name === '') {
+            this.$stepConfigNameInput.value = deviceName;
+            return;
+          }
+
+          this.luxioSerial.system.setName({ name })
+            .then(() => {
+              deviceName = name;
+            })
+            .catch(reject);
+        });
+
+        // LED Type
+        this.$stepConfigTypeInputs[ledType].selected = true;
+        this.$stepConfigTypeInputs.WS2812.addEventListener('change', e => {
+          const type = e.target.value;
+
+          this.luxioSerial.led.setType({ type })
+            .then(() => {
+              ledType = type;
+            })
+            .catch(reject);
+        });
+
+        this.$stepConfigTypeInputs.SK6812.addEventListener('change', e => {
+          const type = e.target.value;
+
+          this.luxioSerial.led.setType({ type })
+            .then(() => {
+              ledType = type;
+            })
+            .catch(reject);
+        });
+
+        // LED Count
+        this.$stepConfigCountInput.value = ledCount;
+        this.$stepConfigCountInput.placeholder = `${this.$stepConfigCountInput.min} - ${this.$stepConfigCountInput.max}`;
+        this.$stepConfigCountInput.addEventListener('change', e => {
+          const count = Number(e.target.value);
+          if (Number.isNaN(count) || count < e.target.min || count > e.target.max) {
+            this.$stepConfigCountInput.value = ledCount;
+            return;
+          }
+
+          this.luxioSerial.led.setCount({ count })
+            .then(() => {
+              ledCount = count;
+            })
+            .catch(reject);
+        });
+
+        // LED Pin
+        this.$stepConfigPinInput.value = ledPin;
+        this.$stepConfigPinInput.addEventListener('change', e => {
+          const pin = Number(e.target.value);
+
+          this.luxioSerial.led.setPin({ pin })
+            .then(() => {
+              ledPin = pin;
+            })
+            .catch(reject);
+        });
+
+        // TODO: Continue button should resolve()
+      });
+
+      // Connect to Wi-Fi
       let wifiConnected = false;
       while (wifiConnected === false) {
         this.$stepWiFi.classList.add('is-visible');
         this.$title.textContent = 'Scanning...';
         this.$subtitle.textContent = 'Luxio is scanning for Wi-Fi networks...';
         this.$throbber.classList.add('is-visible');
-
-        // Open LuxioSerial
-        if (!this.luxioSerial) {
-          this.luxioSerial = new LuxioSerial({ device });
-          await this.luxioSerial.open();
-          await new Promise(resolve => {
-            this.luxioSerial.once('system.ready', resolve);
-          });
-        }
-
-        // Get Name
-        const deviceName = await this.luxioSerial.system.getName();
 
         // Scan for Networks
         await this.luxioSerial.wifi.scanNetworks();
@@ -293,6 +414,9 @@ export default class LuxioWeb {
               $wifiNetwork.classList.add('is-visible');
             }, i * 50);
           }
+
+          // TODO: Add Custom
+
         });
 
         this.$wifiNetworks.innerHTML = '';

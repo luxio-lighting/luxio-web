@@ -32,7 +32,6 @@ export default class LuxioSerial {
 
         for (const char of this.decoder.decode(value)) {
           if (char === '\n') {
-            // console.log(this.buffer)
             try {
               const json = JSON.parse(this.buffer);
               if (json.debug) {
@@ -49,8 +48,12 @@ export default class LuxioSerial {
                 const request = this.requests.get(json.id);
                 if (!request) return this.debug(`No request found for id: ${json.id}`);
 
+                if (request.timeout) {
+                  clearTimeout(request.timeout);
+                }
+
                 if (json.error) {
-                  request.reject(json.error);
+                  request.reject(new Error(json.error));
                 } else {
                   request.resolve(json.result);
                 }
@@ -81,7 +84,7 @@ export default class LuxioSerial {
     await this.writer.write(this.encoder.encode(JSON.stringify(data) + '\n'));
   }
 
-  async request(method, params = {}) {
+  async request(method, params = {}, timeout = 2500) {
     const requestId = ++this.requestId % 256;
 
     const data = {
@@ -100,8 +103,12 @@ export default class LuxioSerial {
     this.requests.set(requestId, {
       resolve: requestPromiseResolve,
       reject: requestPromiseReject,
+      timeout: setTimeout(() => {
+        requestPromiseReject(new Error(`Timeout after ${timeout}ms`));
+      }, timeout),
     });
 
+    this.debug(`Request ${requestId} = ${method}`);
     await this.write(data).catch(err => {
       this.requests.delete(requestId);
       throw err;
@@ -114,6 +121,10 @@ export default class LuxioSerial {
   system = {
     getName: async () => {
       return this.request('system.get_name');
+    },
+
+    setName: async ({ name }) => {
+      return this.request('system.set_name', { name });
     },
   };
 
@@ -146,6 +157,30 @@ export default class LuxioSerial {
 
     setGradient: async ({ pixels = [] }) => {
       return this.request('led.set_gradient', { pixels });
+    },
+
+    getType: async () => {
+      return this.request('led.get_type');
+    },
+
+    setType: async ({ type }) => {
+      return this.request('led.set_type', { type });
+    },
+
+    getCount: async () => {
+      return this.request('led.get_count');
+    },
+
+    setCount: async ({ count }) => {
+      return this.request('led.set_count', { count });
+    },
+
+    getPin: async () => {
+      return this.request('led.get_pin');
+    },
+
+    setPin: async ({ pin }) => {
+      return this.request('led.set_pin', { pin });
     },
   }
 

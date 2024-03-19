@@ -64,11 +64,11 @@ export default class LuxioWeb {
           if (this.$flashButton.classList.contains('is-disabled')) return;
 
           navigator.serial.requestPort({
-            filters: e.altKey // Show all devices when ALT is pressed
-              ? []
-              : [
-                { usbVendorId: 0x1A86 }, // CH341 USB Serial (Wemos D1 Mini)
-              ],
+            // filters: e.altKey // Show all devices when ALT is pressed
+            //   ? []
+            //   : [
+            //     { usbVendorId: 0x1A86 }, // CH341 USB Serial (Wemos D1 Mini)
+            //   ],
           })
             .then(device => resolve(device))
             .catch(err => {
@@ -242,7 +242,10 @@ export default class LuxioWeb {
               .then(() => {
                 deviceName = name;
               })
-              .catch(reject);
+              .catch(err => {
+                this.debug(err);
+                alert(err.message);
+              });
           });
 
           // LED Type
@@ -254,7 +257,10 @@ export default class LuxioWeb {
               .then(() => {
                 ledType = type;
               })
-              .catch(reject);
+              .catch(err => {
+                this.debug(err);
+                alert(err.message);
+              });
           });
 
           this.$stepConfigTypeInputs.SK6812.addEventListener('change', e => {
@@ -264,7 +270,10 @@ export default class LuxioWeb {
               .then(() => {
                 ledType = type;
               })
-              .catch(reject);
+              .catch(err => {
+                this.debug(err);
+                alert(err.message);
+              });
           });
 
           // LED Count
@@ -281,7 +290,10 @@ export default class LuxioWeb {
               .then(() => {
                 ledCount = count;
               })
-              .catch(reject);
+              .catch(err => {
+                this.debug(err);
+                alert(err.message);
+              });
           });
 
           // LED Pin
@@ -293,7 +305,10 @@ export default class LuxioWeb {
               .then(() => {
                 ledPin = pin;
               })
-              .catch(reject);
+              .catch(err => {
+                this.debug(err);
+                alert(err.message);
+              });
           });
 
           // Next

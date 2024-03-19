@@ -154,9 +154,11 @@ export default class LuxioWeb {
         // Download Blob
         const blob = await res.blob();
 
+        // Create Reader
         const reader = new FileReader();;
         reader.readAsBinaryString(blob);
 
+        // Download Blob into Reader
         const firmware = await new Promise((resolve, reject) => {
           reader.onload = () => {
             resolve(reader.result);
@@ -180,9 +182,6 @@ export default class LuxioWeb {
           reportProgress: (fileIndex, written, total) => {
             this.$flashProgress.style.width = 4 + (written / total * (100 - 4)) + '%';
           },
-          // calculateMD5Hash: image => {
-          //  // TODO
-          // },
         });
       }
 

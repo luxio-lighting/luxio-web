@@ -3,7 +3,6 @@
 const debug = require('debug')('LuxioOTA');
 const express = require('express');
 const multer = require('multer');
-const cors = require('cors');
 const createMD5 = require('md5');
 
 const { OTA_SECRET, PLATFORMS } = require('../../config');
@@ -14,8 +13,6 @@ const { Device, Update } = require('../../lib/Database');
 const upload = multer();
 
 module.exports = express()
-
-  .use(cors())
 
   // getUpdates()
   .get('/', promisify(async (req, res) => {
@@ -36,7 +33,7 @@ module.exports = express()
       channel = device.channel;
     }
 
-    const platform = String(req.query.platform || 'luxio').toLowerCase();
+    const platform = String(req.query.platform).toUpperCase();
     if (!PLATFORMS.includes(platform))
       throw new ServerError('invalid_platform', 400);
 

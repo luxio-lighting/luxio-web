@@ -55,7 +55,7 @@ module.exports = express()
       wifi_ssid,
       ip,
       lastseen: new Date(),
-      platform: String(platform || type).toLowerCase(),
+      platform: String(platform || type).toUpperCase(),
     }, {
       upsert: true,
       setDefaultsOnInsert: true,

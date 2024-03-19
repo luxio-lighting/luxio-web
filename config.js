@@ -9,5 +9,5 @@ module.exports.CHANNELS = {
   'BETA': 1,
   'ALPHA': 2,
 };
-module.exports.PLATFORMS = ['wemos', 'luxio', 'test', 'esp8266', 'esp32'];
+module.exports.PLATFORMS = ['WEMOS', 'LUXIO', 'ESP8266', 'ESP32'];
 module.exports.ORIGINS = ['nupnp', 'factory'];

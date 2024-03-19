@@ -3,6 +3,7 @@
 const debug = require('debug')('LuxioOTA');
 const express = require('express');
 const multer = require('multer');
+const cors = require('cors');
 const createMD5 = require('md5');
 
 const { OTA_SECRET, PLATFORMS } = require('../../config');
@@ -13,6 +14,8 @@ const { Device, Update } = require('../../lib/Database');
 const upload = multer();
 
 module.exports = express()
+
+  .use(cors())
 
   // getUpdates()
   .get('/', promisify(async (req, res) => {

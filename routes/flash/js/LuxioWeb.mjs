@@ -116,16 +116,19 @@ export default class LuxioWeb {
         throw new Error(`Unknown Chip: ${chip}`);
       }
 
+      const mac = await esploader.chip.readMac(esploader)
+        .then(mac => mac.toUpperCase());
+      this.debug(`MAC: ${mac}`);
+
       this.$title.textContent = 'Flashing...';
       this.$subtitle.textContent = 'This might take a few minutes.';
       this.$flashProgress.style.width = '2%';
 
       // Download Firmware
       if (this.options.flash) {
-        // const url = new URL('https://ota.luxio.lighting');
-        const url = new URL('http://localhost:4000/ota');
+        const url = new URL('https://ota.luxio.lighting');
         url.searchParams.append('platform', 'ESP8266');
-        url.searchParams.append('id', '00:00:00:00:00:00');
+        url.searchParams.append('id', mac ?? '00:00:00:00:00:00');
         url.searchParams.append('version', '-1');
 
         const res = await fetch(url);
@@ -141,8 +144,12 @@ export default class LuxioWeb {
           throw new Error('Failed to download the firmware.');
         }
 
+        const version = res.headers.get('x-luxio-version');
+        this.debug(`Firmware Version: ${version}`);
+
         // TODO: Check MD5
-        const md5 = res.headers.get('x-MD5');
+        const md5 = res.headers.get('x-md5');
+        this.debug(`Firmware MD5: ${md5}`);
 
         // Download Blob
         const blob = await res.blob();

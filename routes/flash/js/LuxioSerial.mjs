@@ -108,7 +108,7 @@ export default class LuxioSerial {
       }, timeout),
     });
 
-    this.debug(`Request ${requestId} = ${method}`);
+    // this.debug(`Request ${requestId} = ${method}`);
     await this.write(data).catch(err => {
       this.requests.delete(requestId);
       throw err;

@@ -548,6 +548,8 @@ export default class LuxioWeb {
           this.$subtitle.textContent = `${deviceName} is connecting to ${ssid}...`;
           this.$throbber.classList.add('is-visible');
 
+          await this.luxioSerial.wifi.disconnect();
+          await LuxioUtil.wait(500);
           await this.luxioSerial.wifi.connect({ ssid, pass });
 
           // Poll wifi.getState until connected

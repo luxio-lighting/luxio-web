@@ -11,19 +11,26 @@
       const factory = new wasmoon.LuaFactory();
       const lua = await factory.createEngine();
 
-      lua.global.set('sum', (x, y) => x + y)
-      // Run a lua string
-      await lua.doString(`
+      try {
+        lua.global.set('sum', (x, y) => x + y)
+        // Run a lua string
+        await lua.doString(`
     print(sum(10, 10))
     function multiply(x, y)
         return x * y
     end
     `)
-      // Get a global lua function as a JS function
-      const multiply = lua.global.get('multiply')
-      console.log(multiply(10, 10))
+        // Get a global lua function as a JS function
+        const multiply = lua.global.get('multiply')
+        console.log(multiply(10, 10))
 
-      console.log('lua', lua)
+        console.log('lua', lua)
+
+      } catch (err) {
+        console.error('lua error', err)
+      } finally {
+        lua.global.close()
+      }
     }).catch(console.error);
   </script>
 </head>

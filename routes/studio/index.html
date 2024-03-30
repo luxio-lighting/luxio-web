@@ -6,37 +6,213 @@
     type="text/javascript"
     src="https://unpkg.com/wasmoon@1.16.0/dist/index.js"
   ></script>
-  <script type="text/javascript">
-    Promise.resolve().then(async () => {
-      const factory = new wasmoon.LuaFactory();
-      const lua = await factory.createEngine();
+  <style type="text/css">
+    :root {
+      --black: #000;
+      --white: #fff;
+      --luxio-blue: #00D2FF;
+      --luxio-green: #4FFF7F;
+      --luxio-mint: #2EECB6;
+      --luxio-gradient: linear-gradient(45deg, var(--luxio-blue), var(--luxio-green));
+    }
 
-      try {
-        lua.global.set('sum', (x, y) => x + y)
-        // Run a lua string
-        await lua.doString(`
-    print(sum(10, 10))
-    function multiply(x, y)
-        return x * y
-    end
-    `)
-        // Get a global lua function as a JS function
-        const multiply = lua.global.get('multiply')
-        console.log(multiply(10, 10))
+    html,
+    body {
+      margin: 0;
+      padding: 0;
+    }
 
-        console.log('lua', lua)
+    body {
+      background: #000;
+    }
 
-      } catch (err) {
-        console.error('lua error', err)
-      } finally {
-        lua.global.close()
-      }
-    }).catch(console.error);
-  </script>
+    #code-wrap {
+      background: var(--luxio-gradient);
+      width: calc(100vw - 1em - 1em);
+      height: calc(50vh - 1em - 1em);
+      margin: 1em;
+      padding: 1px;
+      border-radius: 10px;
+    }
+
+    #code {
+      width: 100%;
+      height: 100%;
+      border: none;
+      background: #000;
+      box-sizing: border-box;
+      border: none;
+      border-radius: 10px;
+      padding: 1em;
+
+      font-family: monospace;
+      font-size: 16px;
+      color: white;
+
+      outline: none;
+    }
+
+    #run-emulator {
+      position: absolute;
+      top: calc(1em + 4px);
+      right: calc(1em + 2px);
+
+      font-size: 16px;
+      font-weight: 500;
+      padding: 1em;
+      background: var(--luxio-gradient);
+      color: black;
+      border: none;
+      border-radius: 8px;
+    }
+
+    #run-emulator:hover {
+      opacity: 1;
+      cursor: pointer;
+    }
+
+    #run-emulator,
+    #run-emulator:active {
+      opacity: 0.9;
+    }
+
+    #strip {
+      margin: 1em;
+      display: flex;
+      justify-content: space-around;
+      background-color: #000;
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      border-radius: 10px;
+    }
+
+    #strip>.led {
+      flex-shrink: 0;
+      width: 40px;
+      height: 40px;
+      margin: 1em 0;
+
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      border-radius: 3px;
+
+      background-color: rgba(255, 255, 255, 0.05);
+    }
+  </style>
+
 </head>
 
 <body>
 
+  <button id="run-emulator">▶ Run on Emulator</button>
+
+  <div id="code-wrap">
+    <textarea id="code">local pixelCount = luxio_get_pixel_count() -- Get the total number of pixels
+local currentTime = millis() -- Get the current time in milliseconds
+
+-- Calculate the hue increment to create a rainbow across all pixels
+local hueIncrement = 65535 / pixelCount
+
+for i = 0, pixelCount - 1 do
+    -- Calculate the hue for each pixel to create a gradient. 
+    -- The "+ (currentTime / 100 % pixelCount) * hueIncrement" part makes the rainbow move.
+    local hue = (hueIncrement * i + (currentTime / 100 % pixelCount) * hueIncrement) % 65535
+    hue = math.floor(hue)
+
+    -- Set saturation and value (brightness) to maximum within their respective ranges
+    local saturation = 255
+    local value = 255
+
+    -- Set the color of the current pixel with the calculated HSV values
+    luxio_set_pixel_color_hsv(i, hue, saturation, value)
+end
+
+luxio_show()</textarea>
+  </div>
+
+  <div id="strip">
+    <div class="led"></div>
+    <div class="led"></div>
+    <div class="led"></div>
+    <div class="led"></div>
+    <div class="led"></div>
+    <div class="led"></div>
+    <div class="led"></div>
+    <div class="led"></div>
+    <div class="led"></div>
+    <div class="led"></div>
+    <div class="led"></div>
+    <div class="led"></div>
+    <div class="led"></div>
+    <div class="led"></div>
+    <!-- <div class="led"></div>
+    <div class="led"></div>
+    <div class="led"></div>
+    <div class="led"></div>
+    <div class="led"></div>
+    <div class="led"></div> -->
+  </div>
+
+  <script type="text/javascript">
+    let executeInterval;
+
+    const $code = document.getElementById('code');
+    const $runEmulator = document.getElementById('run-emulator');
+
+    Promise.resolve().then(async () => {
+      $runEmulator.addEventListener('click', async () => {
+        const code = $code.value;
+
+        if (executeInterval) {
+          clearInterval(executeInterval);
+        }
+
+        executeInterval = setInterval(async () => {
+          const factory = new wasmoon.LuaFactory();
+          const lua = await factory.createEngine();
+
+          try {
+            lua.global.set('millis', () => {
+              return Date.now();
+            });
+            lua.global.set('luxio_get_pixel_count', () => {
+              const $pixels = document.querySelectorAll(`#strip > .led`);
+              return $pixels.length;
+            });
+            lua.global.set('luxio_set_pixel_color_rgb', (index, r, g, b, w) => {
+              const $pixel = document.querySelector(`#strip .led:nth-child(${index + 1})`);
+              $pixel.style.backgroundColor = `rgb(${r}, ${g}, ${b})`;
+            });
+            lua.global.set('luxio_set_pixel_color_rgbw', (index, r, g, b, w) => {
+              const $pixel = document.querySelector(`#strip .led:nth-child(${index + 1})`);
+              $pixel.style.backgroundColor = `rgb(${r}, ${g}, ${b})`;
+
+              // TODO: RGBW
+            });
+            lua.global.set('luxio_set_pixel_color_hsv', (index, h, s, v) => {
+              const $pixel = document.querySelector(`#strip .led:nth-child(${index + 1})`);
+              $pixel.style.backgroundColor = `hsl(${h / 65535 * 360}, ${s / 255 * 100}%, ${v / 255 * 50}%)`;
+            });
+            lua.global.set('luxio_show', () => {
+              console.log('show');
+            });
+
+            try {
+              await lua.doString(code);
+            } catch (err) {
+              console.error('lua error', err);
+
+              clearInterval(executeInterval);
+
+              alert('Error: ' + err);
+            }
+          } catch (err) {
+            console.error('lua error', err);
+          } finally {
+            lua.global.close();
+          }
+        }, 1000 / 60);
+      });
+    }).catch(console.error);
+  </script>
 </body>
 
 </html>
